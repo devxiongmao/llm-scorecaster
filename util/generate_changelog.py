@@ -25,10 +25,11 @@ def generate_changelog():
         sys.exit(0)
     
     changelog_content = f"""
-    ## Changelog
     ### From {latest_tag} to HEAD
 
     {changelog}
+
+    Please see our [releases](https://github.com/devxiongmao/LLM-Scorecaster/releases) page for previous changelogs per version.
     """
     
     with open("CHANGELOG.md", "a") as file:

@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Ensure we don't run duplicate workflows on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api_changes: ${{ steps.filter.outputs.api }}
+      frontend_changes: ${{ steps.filter.outputs.frontend }}
+      dependency_changes: ${{ steps.filter.outputs.dependencies }}
+      has_labels: ${{ steps.determine-labels.outputs.has_labels }}
+      labels: ${{ steps.determine-labels.outputs.labels }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Needed for git history and better file change detection
+
+      - name: Filter changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'src/api/**'
+            metrics:
+              - 'src/core/metrics/**'
+            docs:
+              - '**/*.md'
+              - '**/*.txt'
+              - '**/*.mermaid'
+              - 'docs/**'
+            dependencies:
+              - 'poetry.lock'
+              - 'pyproject.toml'
+            actions:
+              - '.github/workflows/**'
+              - '.github/dependabot.yml'
+
+      - name: Determine labels based on changes
+        id: determine-labels
+        run: |
+          # Create empty array to store labels
+          declare -a LABELS=()
+
+          if [[ "${{ steps.filter.outputs.api }}" == "true" ]]; then
+            LABELS+=("api")
+          fi
+
+          if [[ "${{ steps.filter.outputs.metrics }}" == "true" ]]; then
+            LABELS+=("metrics")
+          fi
+
+          if [[ "${{ steps.filter.outputs.docs }}" == "true" ]]; then
+            LABELS+=("documentation")
+          fi
+
+          if [[ "${{ steps.filter.outputs.dependencies }}" == "true" ]]; then
+            LABELS+=("dependencies")
+          fi
+
+          if [[ "${{ steps.filter.outputs.actions }}" == "true" ]]; then
+            LABELS+=("github_actions")
+          fi
+
+          if git log --pretty=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -Eiq 'Add|add|create|Create'; then
+            LABELS+=("enhancement")
+          fi
+
+          if git log --pretty=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -Eiq '\bfix(|es|ed|ing)\b'; then
+            LABELS+=("bug")
+          fi
+
+          if git log --pretty=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -Eiq 'refactor|Refactor|Update|update'; then
+            LABELS+=("refactor")
+          fi
+
+          if [[ "${{ github.head_ref }}" == release-* ]]; then
+            LABELS+=("release")
+          fi
+
+          # Check if we have any labels
+          if [ ${#LABELS[@]} -eq 0 ]; then
+            echo "has_labels=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Use newline delimiter for multiline output
+          delimiter="$(openssl rand -hex 8)"
+          echo "has_labels=true" >> $GITHUB_OUTPUT
+          echo "labels<<$delimiter" >> $GITHUB_OUTPUT
+          for label in "${LABELS[@]}"; do
+            echo "$label" >> $GITHUB_OUTPUT
+          done
+          echo "$delimiter" >> $GITHUB_OUTPUT
+
+      - name: Add Labels to PR
+        if: github.event_name == 'pull_request' && steps.determine-labels.outputs.has_labels == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labels = `${{ steps.determine-labels.outputs.labels }}`.trim().split('\n');
+              
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });

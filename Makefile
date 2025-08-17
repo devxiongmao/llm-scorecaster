@@ -15,6 +15,10 @@ dev:
 test:
 	poetry run python -m pytest
 
+.PHONY: lint
+lint:
+	poetry run pylint .
+
 .PHONY: check
 check:
 	poetry run pyright .

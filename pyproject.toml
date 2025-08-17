@@ -21,6 +21,7 @@ pytest-asyncio = "^1.1.0"
 httpx = "^0.28.1"
 black = "^25.1.0"
 pyright = "^1.1.403"
+pylint = "^3.3.8"
 
 
 [build-system]
@@ -38,3 +39,27 @@ defineConstant = { DEBUG = true }
 
 reportMissingImports = "error"
 reportMissingTypeStubs = false
+
+[tool.pylint]
+# Basic settings
+disable = [
+
+  "C0114", # missing-module-docstring
+  "C0115", # missing-class-docstring
+  "C0116", # missing-function-docstring
+  "C0301", # line-too-long
+  "C0411", # wrong-import-order
+  "C0415", # import-outside-toplevel
+  "R0903", # too-few-public-methods
+  "R1705", # no-else-return
+  "W0613", # unused-argument
+  "W0621", # redefined-outer-name
+  "W0707", # raise-missing-from
+  "W0718", # broad-exception-caught
+]
+
+max-line-length = 100
+jobs = 4
+
+[tool.pylint.'FORMAT']
+max-line-length = 150 # Too long, shorten to 100

@@ -1,11 +1,13 @@
 from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.core.settings import settings
 
 security = HTTPBearer()
 
 
-async def verify_api_key(token: str = Depends(security)) -> bool:
+async def verify_api_key(
+    token: HTTPAuthorizationCredentials = Depends(security),
+) -> bool:
     """
     Verify the provided API key against the configured key.
 

@@ -25,10 +25,14 @@ class MetricsRequest(BaseModel):
     """Request model for metrics evaluation."""
 
     text_pairs: List[TextPair] = Field(
-        ..., min_items=1, description="List of text pairs to evaluate"
+        ...,
+        min_items=1,
+        description="List of text pairs to evaluate",  # type: ignore
     )
     metrics: List[MetricType] = Field(
-        ..., min_items=1, description="List of metrics to calculate"
+        ...,
+        min_items=1,
+        description="List of metrics to calculate",  # type: ignore
     )
     batch_size: Optional[int] = Field(
         default=32, description="Batch size for processing optimization"

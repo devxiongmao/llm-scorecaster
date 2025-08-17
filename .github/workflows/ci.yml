@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -121,3 +121,81 @@ jobs:
               issue_number: context.issue.number,
               labels: labels
             });
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Changelog and Version
+        run: |
+          # Generate changelog
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          CHANGELOG=$(git log "${LATEST_TAG}..HEAD" --pretty=format:"- %s (%h) by %an")
+
+          if [ -n "$CHANGELOG" ]; then
+            echo "## Changelog" >> CHANGELOG.md
+            echo "### From $LATEST_TAG to HEAD" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$CHANGELOG" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          # Determine version
+          CURRENT_VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
+          COMMITS=$(git log "v${CURRENT_VERSION}..HEAD" --pretty=format:"%s")
+
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+
+          if echo "$COMMITS" | grep -qi '\(breaking\|major\)'; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif echo "$COMMITS" | grep -qi '\(feature\|minor\)'; then
+            minor=$((minor + 1))
+            patch=0
+          else
+            patch=$((patch + 1))
+          fi
+
+          NEW_VERSION="${major}.${minor}.${patch}"
+          echo "$NEW_VERSION" > VERSION
+          echo "Version bumped to: $NEW_VERSION"
+
+      - name: Commit Changelog and Version Updates
+        run: |
+          TAG_NAME="v$(cat VERSION)"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add CHANGELOG.md VERSION
+          git commit -m "Release $TAG_NAME"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+          git push origin ${{ github.head_ref }}
+
+      - name: Read Changelog
+        id: read_changelog
+        run: |
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          cat CHANGELOG.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.TAG_NAME }}
+          body: |
+            ## Changelog
+
+            ${{ env.CHANGELOG_CONTENT }}
+          draft: false
+          prerelease: false

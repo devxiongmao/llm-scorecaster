@@ -3,7 +3,7 @@ from unittest.mock import patch
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from src.models.schemas import MetricsRequest, TextPair
+from src.models.schemas import MetricType, MetricsRequest, TextPair
 from src.api.v1.metrics_sync import (
     router as metrics_router,
 )
@@ -31,7 +31,7 @@ def valid_request_body_fixture():
                 candidate="Hi world, how are you doing?",
             ),
         ],
-        metrics=["bert_score", "bleu", "rouge_l"],
+        metrics=[MetricType("bert_score"), MetricType("bleu"), MetricType("rouge_l")],
     ).model_dump()
 
 
@@ -41,7 +41,7 @@ def single_pair_request_fixture():
         text_pairs=[
             TextPair(reference="Test reference text", candidate="Test candidate text")
         ],
-        metrics=["bert_score"],
+        metrics=[MetricType("bert_score")],
     ).model_dump()
 
 
@@ -234,12 +234,12 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
     request_body = MetricsRequest(
         text_pairs=[TextPair(reference="Test reference", candidate="Test candidate")],
         metrics=[
-            "bert_score",
-            "bleu",
-            "rouge_l",
-            "rouge_1",
-            "rouge_2",
-            "align_score",
+            MetricType("bert_score"),
+            MetricType("bleu"),
+            MetricType("rouge_l"),
+            MetricType("rouge_1"),
+            MetricType("rouge_2"),
+            MetricType("align_score"),
         ],
     ).model_dump()
 
@@ -294,7 +294,7 @@ def test_evaluate_metrics_pair_index_assignment(client: TestClient):
             TextPair(reference="Second ref", candidate="Second cand"),
             TextPair(reference="Third ref", candidate="Third cand"),
         ],
-        metrics=["bert_score"],
+        metrics=[MetricType("bert_score")],
     ).model_dump()
 
     response = client.post(

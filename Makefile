@@ -15,6 +15,10 @@ dev:
 test:
 	poetry run python -m pytest
 
+.PHONY: check
+check:
+	poetry run pyright .
+
 .PHONY: format
 format:
 	poetry run black .

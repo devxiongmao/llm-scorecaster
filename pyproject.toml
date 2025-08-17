@@ -20,6 +20,7 @@ pytest = "^8.4.1"
 pytest-asyncio = "^1.1.0"
 httpx = "^0.28.1"
 black = "^25.1.0"
+pyright = "^1.1.403"
 
 
 [build-system]
@@ -29,3 +30,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+
+[tool.pyright]
+exclude = ["**/__pycache__"]
+defineConstant = { DEBUG = true }
+
+reportMissingImports = "error"
+reportMissingTypeStubs = false

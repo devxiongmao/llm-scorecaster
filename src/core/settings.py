@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Authentication
     api_key: str = Field(
-        ..., description="API key for authentication. Must be set by user."
+        default="", description="API key for authentication. Must be set by user."
     )
 
     # Redis configuration

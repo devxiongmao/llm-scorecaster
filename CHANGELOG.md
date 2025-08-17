@@ -6,3 +6,10 @@
 - XMDEV-443: Change pull request template (#4) (a778cf5) by Jon
 - XMDEV-410: Adds async and sync user journeys (#5) (fa36826) by Jon
 
+## Changelog
+### From v0.0.2 to HEAD
+
+- XMDEV-475: Updates create github release workflow (#11) (e804953) by Jon
+- XMDEV-476: Adds dependabot (#10) (f4f7c79) by Jon
+- XMDEV-479: Adds CI and prevent main merge files (#9) (7f97893) by Jon
+

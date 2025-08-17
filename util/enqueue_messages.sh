@@ -1,2 +1,0 @@
-awslocal sqs create-queue --queue-name localstack-queue
-awslocal sqs send-message --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/localstack-queue --message-body "Hello World"

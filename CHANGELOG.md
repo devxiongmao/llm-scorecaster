@@ -1,15 +1,11 @@
 ## Changelog
-### From v0.0.1 to HEAD
+### From v0.0.3 to HEAD
 
-- NO-JIRA: Update poetry action and generate changelog script (#8) (5dbe642) by Jon
-- NO-JIRA: Update release creation workflow to use python version file (#7) (4a491b7) by Jon
-- XMDEV-443: Change pull request template (#4) (a778cf5) by Jon
-- XMDEV-410: Adds async and sync user journeys (#5) (fa36826) by Jon
-
-## Changelog
-### From v0.0.2 to HEAD
-
-- XMDEV-475: Updates create github release workflow (#11) (e804953) by Jon
-- XMDEV-476: Adds dependabot (#10) (f4f7c79) by Jon
-- XMDEV-479: Adds CI and prevent main merge files (#9) (7f97893) by Jon
+- Bump actions/checkout from 4 to 5 (#13) (064ce18) by dependabot[bot]
+- XMDEV-478: Adds pylint, pyright and pytest to ci (#18) (bb05067) by Jon
+- XMDEV-477: Adds pylint to project (359e71d) by Jon Psaila
+- XMDEV-481: Adds pyright for type checking (8275e79) by Jon Psaila
+- XMDEV-145: Add black formatting (114dda0) by Jon Psaila
+- XMDEV-480: Fixes bug with changelog appending (#15) (e5d7f45) by Jon
+- XMDEV-135: Adds basic synchronous api with auth (#16) (7bdb28b) by Jon
 

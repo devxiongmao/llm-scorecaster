@@ -14,3 +14,7 @@ dev:
 .PHONY: test
 test:
 	poetry run python -m pytest
+
+.PHONY: format
+format:
+	poetry run black .

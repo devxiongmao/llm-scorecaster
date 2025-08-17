@@ -155,6 +155,8 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     needs: analyze_changes
+    env:
+      API_KEY: your-secret-api-key-here
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5

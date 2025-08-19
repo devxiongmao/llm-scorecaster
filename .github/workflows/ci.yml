@@ -244,8 +244,6 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           name: Release ${{ env.TAG_NAME }}
           body: |
-            ## Changelog
-
             ${{ env.CHANGELOG_CONTENT }}
           draft: false
           prerelease: false

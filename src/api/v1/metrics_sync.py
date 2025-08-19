@@ -6,56 +6,47 @@ from src.models.schemas import (
     MetricResult,
 )
 from src.api.auth.dependencies import verify_api_key
+from src.core.metrics.registry import metric_registry
+from src.models.schemas import TextPair
 import time
-import random
 import asyncio
 from typing import List
 
 router = APIRouter()
 
 
-def generate_placeholder_results(request: MetricsRequest) -> List[TextPairResult]:
-    """
-    Generate placeholder metric results for testing purposes.
-    This will be replaced with actual metric calculations later.
-    """
+def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]:
+    """Compute actual metrics using the registry."""
+
+    # Discover and get the requested metrics
+    metric_registry.discover_metrics()
+    metrics = metric_registry.get_metrics([m.value for m in request.metrics])
+
     results = []
 
-    for idx, text_pair in enumerate(request.text_pairs):
-        # Generate placeholder metrics for each requested metric type
-        metrics = []
-        for metric_name in request.metrics:
-            # Generate realistic placeholder scores based on metric type
-            if metric_name == "bert_score":
-                score = round(random.uniform(0.7, 0.95), 3)
-                details = {
-                    "precision": round(score + random.uniform(-0.05, 0.05), 3),
-                    "recall": round(score + random.uniform(-0.05, 0.05), 3),
-                    "f1": score,
-                }
-            elif metric_name in ["bleu"]:
-                score = round(random.uniform(0.2, 0.8), 3)
-                details = None
-            elif metric_name.startswith("rouge"):
-                score = round(random.uniform(0.3, 0.85), 3)
-                details = None
-            elif metric_name == "align_score":
-                score = round(random.uniform(0.6, 0.9), 3)
-                details = None
-            else:
-                score = round(random.uniform(0.5, 0.9), 3)
-                details = None
+    # Convert Pydantic TextPairs to the format metrics expect
+    text_pairs = [
+        TextPair(reference=pair.reference, candidate=pair.candidate)
+        for pair in request.text_pairs
+    ]
 
-            metrics.append(
-                MetricResult(metric_name=metric_name, score=score, details=details)
+    for pair_idx, text_pair in enumerate(text_pairs):
+        pair_results = []
+
+        # Compute each requested metric for this text pair
+        for metric_name, metric_instance in metrics.items():
+            result = metric_instance.compute_single(
+                text_pair.reference, text_pair.candidate
             )
+            pair_results.append(result)
 
+        # Create the response format
         results.append(
             TextPairResult(
-                pair_index=idx,
+                pair_index=pair_idx,
                 reference=text_pair.reference,
                 candidate=text_pair.candidate,
-                metrics=metrics,
+                metrics=pair_results,
             )
         )
 
@@ -80,8 +71,7 @@ async def evaluate_metrics_sync(
         processing_delay = len(request.text_pairs) * len(request.metrics) * 0.01
         await asyncio.sleep(min(processing_delay, 2.0))  # Cap at 2 seconds for demo
 
-        # Generate placeholder results
-        results = generate_placeholder_results(request)
+        results = compute_metrics_for_request(request)
 
         processing_time = time.time() - start_time
 

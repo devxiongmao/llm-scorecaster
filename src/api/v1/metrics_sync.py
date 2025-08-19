@@ -3,7 +3,6 @@ from src.models.schemas import (
     MetricsRequest,
     MetricsResponse,
     TextPairResult,
-    MetricResult,
 )
 from src.api.auth.dependencies import verify_api_key
 from src.core.metrics.registry import metric_registry

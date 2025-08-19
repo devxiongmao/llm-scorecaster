@@ -73,6 +73,10 @@ class BertScoreMetric(BaseMetric):
         """
         self._load_model()
 
+        # Type assertion since _load_model ensures _scorer is not None
+        # pyright fix
+        assert self._scorer is not None
+
         try:
             # Compute BERT Score
             precision, recall, f1 = self._scorer.score([candidate], [reference])
@@ -114,6 +118,10 @@ class BertScoreMetric(BaseMetric):
         """
         self._load_model()
 
+        # Type assertion since _load_model ensures _scorer is not None
+        # pyright fix
+        assert self._scorer is not None
+
         if not text_pairs:
             return []
 
@@ -154,7 +162,7 @@ class BertScoreMetric(BaseMetric):
                         self._notify_pair_processed(i + j, result)
 
                 except Exception as e:
-                    logger.error(f"Error processing batch {i//batch_size + 1}: {e}")
+                    logger.error(f"Error processing batch {i // batch_size + 1}: {e}")
 
                     # Create error results for the batch
                     for j, pair in enumerate(batch):

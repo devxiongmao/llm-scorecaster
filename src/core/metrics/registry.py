@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
 from src.core.metrics.base import BaseMetric
 import importlib
 import pkgutil
@@ -68,7 +68,6 @@ class MetricRegistry:
                                 and issubclass(attr, BaseMetric)
                                 and attr is not BaseMetric
                             ):
-
                                 # Register the metric class
                                 self._register_metric_class(attr)
                                 logger.info(f"Discovered metric: {attr.__name__}")
@@ -161,7 +160,9 @@ class MetricRegistry:
 
         return list(self._metrics.keys())
 
-    def get_metric_info(self, metric_name: str) -> Dict[str, any]:
+    def get_metric_info(
+        self, metric_name: str
+    ) -> Dict[str, Any]:  # Should not be Any, Fix this pyright
         """
         Get information about a specific metric.
 
@@ -180,7 +181,9 @@ class MetricRegistry:
             "class_name": metric.__class__.__name__,
         }
 
-    def get_all_metrics_info(self) -> Dict[str, Dict[str, any]]:
+    def get_all_metrics_info(
+        self,
+    ) -> Dict[str, Dict[str, Any]]:  # Should not be Any, Fix this pyright
         """
         Get information about all available metrics.
 

@@ -55,7 +55,7 @@ class TestBaseMetric:
     def test_cannot_instantiate_abstract_class(self):
         """Test that BaseMetric cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            BaseMetric()  # type: ignore
+            BaseMetric()  # type: ignore[abstract]
 
     def test_concrete_implementation_properties(self):
         """Test that concrete implementations work correctly."""
@@ -287,7 +287,7 @@ class TestMetricSubclassRequirements:
                 ) -> MetricResult:
                     return MetricResult(metric_name="test", score=0.0)
 
-            IncompleteMetric1()  # type: ignore
+            IncompleteMetric1()  # type: ignore[abstract]
 
     def test_missing_metric_type_property(self):
         """Test that subclass must implement metric_type property."""
@@ -303,7 +303,7 @@ class TestMetricSubclassRequirements:
                 ) -> MetricResult:
                     return MetricResult(metric_name="test", score=0.0)
 
-            IncompleteMetric2()  # type: ignore
+            IncompleteMetric2()  # type: ignore[abstract]
 
     def test_missing_compute_single_method(self):
         """Test that subclass must implement compute_single method."""
@@ -318,7 +318,7 @@ class TestMetricSubclassRequirements:
                 def metric_type(self) -> MetricType:
                     return MetricType.BERT_SCORE
 
-            IncompleteMetric3()  # type: ignore
+            IncompleteMetric3()  # type: ignore[abstract]
 
 
 class TestMetricTypes:

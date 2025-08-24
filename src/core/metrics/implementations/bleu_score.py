@@ -254,7 +254,7 @@ class BleuMetric(BaseMetric):
         lowercase: Optional[bool] = None,
     ) -> None:
         """
-        Update BLEU configuration. Will take effect on next computation. 
+        Update BLEU configuration. Will take effect on next computation.
         Allows you to update the settings at runtime without recreating the metric.
 
         Args:

@@ -22,6 +22,7 @@ httpx = "^0.28.1"
 black = "^25.1.0"
 pyright = "^1.1.403"
 pylint = "^3.3.8"
+sacrebleu = "^2.5.1"
 
 
 [build-system]
@@ -56,12 +57,15 @@ disable = [
   "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "R0903", # too-few-public-methods
+  "R0913", # too-many-arguments
   "R0914", # too-many-locals
+  "R0917", # too-many-positional-arguments
   "R1702", # too-many-nested-blocks
   "R1705", # no-else-return
   "W0107", # unnecessary-pass
   "W0212", # protected-access
   "W0231", # super-init-not-called
+  "W0611", # unused-import
   "W0612", # unused-variable
   "W0613", # unused-argument
   "W0621", # redefined-outer-name

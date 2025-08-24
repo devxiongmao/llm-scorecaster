@@ -7,7 +7,7 @@ class MetricType(str, Enum):
     """Available metric types."""
 
     BERT_SCORE = "bert_score"
-    BLEU = "bleu"
+    BLEU = "bleu_score"
     ROUGE_L = "rouge_l"
     ROUGE_1 = "rouge_1"
     ROUGE_2 = "rouge_2"

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from pathlib import Path
 
@@ -17,6 +17,8 @@ def get_version() -> str:
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
     # Authentication
     api_key: str = Field(
@@ -40,10 +42,6 @@ class Settings(BaseSettings):
         description="Application environment (development, staging, production)",
     )
     debug: bool = Field(default=False, description="Enable debug mode for development")
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
 
 
 settings = Settings()

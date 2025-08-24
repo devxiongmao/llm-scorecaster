@@ -328,7 +328,7 @@ class TestMetricTypes:
         """Test that all metric types are correctly defined."""
         expected_values = {
             "bert_score",
-            "bleu",
+            "bleu_score",
             "rouge_l",
             "rouge_1",
             "rouge_2",

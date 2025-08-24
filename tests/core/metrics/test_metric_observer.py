@@ -107,9 +107,9 @@ def test_on_metric_start(observer):
     assert observer.metric_starts[0] == ("bert_score", 10)
 
     # Test with different values
-    observer.on_metric_start("bleu", 0)
+    observer.on_metric_start("bleu_score", 0)
     assert len(observer.metric_starts) == 2
-    assert observer.metric_starts[1] == ("bleu", 0)
+    assert observer.metric_starts[1] == ("bleu_score", 0)
 
 
 def test_on_pair_processed(observer, sample_result):
@@ -179,19 +179,19 @@ def test_multiple_metrics_tracking(observer):
     observer.on_metric_complete("bert_score", [result1])
 
     # Second metric
-    observer.on_metric_start("bleu", 1)
-    result2 = MetricResult(metric_name="bleu", score=0.7)
-    observer.on_pair_processed("bleu", 0, result2)
-    observer.on_metric_complete("bleu", [result2])
+    observer.on_metric_start("bleu_score", 1)
+    result2 = MetricResult(metric_name="bleu_score", score=0.7)
+    observer.on_pair_processed("bleu_score", 0, result2)
+    observer.on_metric_complete("bleu_score", [result2])
 
     # Check that both metrics were tracked
     assert len(observer.metric_starts) == 2
     assert observer.metric_starts[0][0] == "bert_score"
-    assert observer.metric_starts[1][0] == "bleu"
+    assert observer.metric_starts[1][0] == "bleu_score"
 
     assert len(observer.pairs_processed) == 2
     assert observer.pairs_processed[0][0] == "bert_score"
-    assert observer.pairs_processed[1][0] == "bleu"
+    assert observer.pairs_processed[1][0] == "bleu_score"
 
 
 def test_error_handling_workflow(observer):
@@ -311,7 +311,7 @@ def test_observer_state_isolation():
     "metric_name,total_pairs",
     [
         ("bert_score", 1),
-        ("bleu", 10),
+        ("bleu_score", 10),
         ("rouge_l", 100),
         ("rouge_1", 0),  # Edge case: zero pairs
     ],

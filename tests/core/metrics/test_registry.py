@@ -414,14 +414,14 @@ def test_list_available_metrics_auto_discovers():
 def test_get_metric_info():
     """get_metric_info returns complete information about a metric."""
     registry = create_fresh_registry()
-    registry._metrics["bleu"] = MockBleuMetric
+    registry._metrics["bleu_score"] = MockBleuMetric
     registry._discovered = True
 
-    info = registry.get_metric_info("bleu")
+    info = registry.get_metric_info("bleu_score")
 
     expected = {
         "name": "bleu",
-        "type": "bleu",
+        "type": "bleu_score",
         "description": "Mock BLEU metric",
         "requires_model_download": False,
         "class_name": "MockBleuMetric",
@@ -610,9 +610,9 @@ def test_discover_metrics_handles_discovery_exception():
 @pytest.mark.parametrize(
     "method_name,args",
     [
-        ("get_metric_info", ["bleu"]),
-        ("is_metric_available", ["bleu"]),
-        ("validate_metrics", [["bleu"]]),
+        ("get_metric_info", ["bleu_score"]),
+        ("is_metric_available", ["bleu_score"]),
+        ("validate_metrics", [["bleu_score"]]),
     ],
 )
 def test_methods_work_with_registered_metrics(method_name, args):

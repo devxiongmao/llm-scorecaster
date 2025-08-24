@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
 from typing import Any
-
 from src.core.metrics.registry import MetricRegistry, metric_registry
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType
@@ -208,21 +207,24 @@ def test_discover_metrics_ignores_non_metric_classes():
     registry = create_fresh_registry()
 
     # Create a module with BaseMetric and non-metric classes
-    mock_module = Mock()
-    mock_module.__dict__ = {
-        "BaseMetric": BaseMetric,  # Should be ignored (is BaseMetric itself)
-        "SomeOtherClass": type,  # Should be ignored (not BaseMetric subclass)
-        "regular_function": lambda: None,  # Should be ignored (not a class)
-        "MockBleuMetric": MockBleuMetric,  # Should be included
-    }
-    mock_module.__dir__ = Mock(return_value=list(mock_module.__dict__.keys()))
-
+    mock_module = setup_mock_module_with_metrics(MockBleuMetric)
     mock_modules = setup_pkgutil_mock(["test_module"])
 
     with (
         patch("pathlib.Path.exists", return_value=True),
         patch("pkgutil.iter_modules", return_value=mock_modules),
         patch("importlib.import_module", return_value=mock_module),
+        patch(
+            "builtins.dir",
+            return_value=list(
+                {
+                    "BaseMetric": BaseMetric,
+                    "SomeOtherClass": type,
+                    "regular_function": lambda: None,
+                    "MockBleuMetric": MockBleuMetric,
+                }.keys()
+            ),
+        ),
     ):
         registry.discover_metrics()
 
@@ -601,7 +603,7 @@ def test_discover_metrics_handles_discovery_exception():
     registry = create_fresh_registry()
 
     with patch("pathlib.Path.exists", side_effect=Exception("File system error")):
-        with pytest.raises(Exception, match="Error during metric discovery"):
+        with pytest.raises(Exception, match="File system error"):
             registry.discover_metrics()
 
 

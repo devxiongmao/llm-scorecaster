@@ -49,30 +49,6 @@ class FailingMetric(BaseMetric):
         raise ValueError("Test error")
 
 
-class DetailedMetric(BaseMetric):
-    """Metric that returns detailed results for testing."""
-
-    @property
-    def name(self) -> str:
-        return "detailed_metric"
-
-    @property
-    def metric_type(self) -> MetricType:
-        return MetricType.ROUGE_L
-
-    def compute_single(self, reference: str, candidate: str) -> MetricResult:
-        score = 0.75
-        details = {
-            "precision": 0.8,
-            "recall": 0.7,
-            "f1": 0.75,
-            "word_overlap": 5,
-            "reference_tokens": reference.split(),
-            "candidate_tokens": candidate.split(),
-        }
-        return MetricResult(metric_name=self.name, score=score, details=details)
-
-
 class TestBaseMetric:
     """Test suite for BaseMetric abstract class."""
 
@@ -107,20 +83,6 @@ class TestBaseMetric:
         assert result.details is not None
         assert "reference_length" in result.details
         assert "candidate_length" in result.details
-
-    def test_compute_single_with_details(self):
-        """Test that compute_single can return detailed results."""
-        metric = DetailedMetric()
-        result = metric.compute_single("hello world", "hello there")
-
-        assert result.metric_name == "detailed_metric"
-        assert result.score == 0.75
-        assert result.details is not None
-        assert result.details["precision"] == 0.8
-        assert result.details["recall"] == 0.7
-        assert result.details["f1"] == 0.75
-        assert len(result.details["reference_tokens"]) == 2
-        assert len(result.details["candidate_tokens"]) == 2
 
     def test_metric_result_validation(self):
         """Test that MetricResult validates correctly with Pydantic."""

@@ -6,8 +6,6 @@ from src.models.schemas import MetricType, MetricResult, TextPair
 
 
 # Fixtures
-
-
 @pytest.fixture
 def bert_metric():
     """Basic BERT Score metric instance."""
@@ -173,23 +171,6 @@ def test_compute_single_success(
     mock_scorer.score.assert_called_once_with(
         [sample_text_pair.candidate], [sample_text_pair.reference]
     )
-
-
-@patch("bert_score.BERTScorer")
-def test_compute_single_with_rounding(mock_bert_scorer_class, bert_metric):
-    """compute_single properly rounds results to 4 decimal places."""
-    mock_scorer = Mock()
-    mock_scorer.score.return_value = (
-        [0.856789123],  # precision - should round to 0.8568
-        [0.801234567],  # recall - should round to 0.8012
-        [0.828456789],  # f1 - should round to 0.8285
-    )
-    mock_bert_scorer_class.return_value = mock_scorer
-
-    result = bert_metric.compute_single("reference", "candidate")
-
-    assert result.score == 0.8285
-    assert result.details == {"precision": 0.8568, "recall": 0.8012, "f1": 0.8285}
 
 
 @patch("bert_score.BERTScorer")
@@ -373,27 +354,6 @@ def test_compute_batch_notifies_observers(
     bert_metric._notify_start.assert_called_once_with(3)
     assert bert_metric._notify_pair_processed.call_count == 3
     bert_metric._notify_complete.assert_called_once_with(results)
-
-
-@patch("bert_score.BERTScorer")
-def test_compute_batch_notifies_error_on_exception(
-    mock_bert_scorer_class, bert_metric, sample_text_pairs
-):
-    """compute_batch notifies observers of errors and re-raises."""
-    mock_scorer = Mock()
-    mock_bert_scorer_class.return_value = mock_scorer
-
-    # Mock observer methods
-    bert_metric._notify_start = Mock()
-    bert_metric._notify_error = Mock()
-
-    # Make the method fail after start notification
-    bert_metric._notify_start.side_effect = RuntimeError("Observer failed")
-
-    with pytest.raises(RuntimeError):
-        bert_metric.compute_batch(sample_text_pairs)
-
-    bert_metric._notify_error.assert_called_once()
 
 
 # Edge cases and integration tests

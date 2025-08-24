@@ -47,59 +47,6 @@ class ConcreteObserver(MetricObserver):
         self.metric_errors.append((metric_name, error))
 
 
-class LoggingObserver(MetricObserver):
-    """Observer that logs events for testing."""
-
-    def __init__(self):
-        self.log = []
-
-    def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
-        self.log.append(f"START: {metric_name} with {total_pairs} pairs")
-
-    def on_pair_processed(
-        self, metric_name: str, pair_index: int, result: MetricResult
-    ) -> None:
-        self.log.append(
-            f"PROCESSED: {metric_name} pair {pair_index} -> score {result.score}"
-        )
-
-    def on_metric_complete(self, metric_name: str, results: List[MetricResult]) -> None:
-        avg_score = sum(r.score for r in results) / len(results) if results else 0
-        self.log.append(
-            f"COMPLETE: {metric_name} with {len(results)} results, avg score {avg_score:.2f}"
-        )
-
-    def on_metric_error(self, metric_name: str, error: Exception) -> None:
-        self.log.append(
-            f"ERROR: {metric_name} failed with {type(error).__name__}: {str(error)}"
-        )
-
-
-class FailingObserver(MetricObserver):
-    """Observer that raises exceptions for testing error handling."""
-
-    def __init__(self, fail_on: str = "start"):
-        self.fail_on = fail_on
-
-    def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
-        if self.fail_on == "start":
-            raise RuntimeError("Observer failed on start")
-
-    def on_pair_processed(
-        self, metric_name: str, pair_index: int, result: MetricResult
-    ) -> None:
-        if self.fail_on == "pair_processed":
-            raise RuntimeError("Observer failed on pair processed")
-
-    def on_metric_complete(self, metric_name: str, results: List[MetricResult]) -> None:
-        if self.fail_on == "complete":
-            raise RuntimeError("Observer failed on complete")
-
-    def on_metric_error(self, metric_name: str, error: Exception) -> None:
-        if self.fail_on == "error":
-            raise RuntimeError("Observer failed on error")
-
-
 # Fixtures
 
 
@@ -107,12 +54,6 @@ class FailingObserver(MetricObserver):
 def observer():
     """Basic concrete observer for testing."""
     return ConcreteObserver()
-
-
-@pytest.fixture
-def logging_observer():
-    """Logging observer for testing."""
-    return LoggingObserver()
 
 
 @pytest.fixture
@@ -266,87 +207,6 @@ def test_error_handling_workflow(observer):
     assert observer.metric_errors[0][1] == test_error
 
 
-# Logging observer tests
-
-
-def test_logging_observer_start(logging_observer):
-    """Logging observer creates correct start message."""
-    logging_observer.on_metric_start("test_metric", 5)
-
-    assert len(logging_observer.log) == 1
-    assert "START: test_metric with 5 pairs" in logging_observer.log[0]
-
-
-def test_logging_observer_pair_processed(logging_observer):
-    """Logging observer creates correct pair processed message."""
-    result = MetricResult(metric_name="test", score=0.75)
-    logging_observer.on_pair_processed("test_metric", 2, result)
-
-    assert len(logging_observer.log) == 1
-    assert "PROCESSED: test_metric pair 2 -> score 0.75" in logging_observer.log[0]
-
-
-def test_logging_observer_complete(logging_observer):
-    """Logging observer creates correct completion message."""
-    results = [
-        MetricResult(metric_name="test", score=0.8),
-        MetricResult(metric_name="test", score=0.6),
-    ]
-    logging_observer.on_metric_complete("test_metric", results)
-
-    assert len(logging_observer.log) == 1
-    log_message = logging_observer.log[0]
-    assert "COMPLETE: test_metric with 2 results" in log_message
-    assert "avg score 0.70" in log_message
-
-
-def test_logging_observer_complete_empty_results(logging_observer):
-    """Logging observer handles empty results correctly."""
-    logging_observer.on_metric_complete("test_metric", [])
-
-    assert len(logging_observer.log) == 1
-    assert (
-        "COMPLETE: test_metric with 0 results, avg score 0.00"
-        in logging_observer.log[0]
-    )
-
-
-def test_logging_observer_error(logging_observer):
-    """Logging observer creates correct error message."""
-    error = ValueError("Test error")
-    logging_observer.on_metric_error("test_metric", error)
-
-    assert len(logging_observer.log) == 1
-    log_message = logging_observer.log[0]
-    assert "ERROR: test_metric failed with ValueError: Test error" in log_message
-
-
-def test_logging_observer_full_workflow(logging_observer):
-    """Complete workflow logging works correctly."""
-    logging_observer.on_metric_start("full_test", 2)
-
-    result1 = MetricResult(metric_name="full_test", score=0.9)
-    logging_observer.on_pair_processed("full_test", 0, result1)
-
-    result2 = MetricResult(metric_name="full_test", score=0.7)
-    logging_observer.on_pair_processed("full_test", 1, result2)
-
-    logging_observer.on_metric_complete("full_test", [result1, result2])
-
-    assert len(logging_observer.log) == 4
-    assert "START" in logging_observer.log[0]
-    assert (
-        "PROCESSED" in logging_observer.log[1] and "pair 0" in logging_observer.log[1]
-    )
-    assert (
-        "PROCESSED" in logging_observer.log[2] and "pair 1" in logging_observer.log[2]
-    )
-    assert (
-        "COMPLETE" in logging_observer.log[3]
-        and "avg score 0.80" in logging_observer.log[3]
-    )
-
-
 # Abstract method requirement tests
 
 
@@ -428,44 +288,6 @@ def test_missing_on_metric_error():
                 pass
 
         IncompleteObserver4()  # type: ignore
-
-
-# Error handling tests
-
-
-def test_failing_observer_on_start():
-    """Failing observer raises exception on start."""
-    observer = FailingObserver("start")
-
-    with pytest.raises(RuntimeError, match="Observer failed on start"):
-        observer.on_metric_start("test", 1)
-
-
-def test_failing_observer_on_pair_processed():
-    """Failing observer raises exception on pair processed."""
-    observer = FailingObserver("pair_processed")
-    result = MetricResult(metric_name="test", score=0.5)
-
-    with pytest.raises(RuntimeError, match="Observer failed on pair processed"):
-        observer.on_pair_processed("test", 0, result)
-
-
-def test_failing_observer_on_complete():
-    """Failing observer raises exception on complete."""
-    observer = FailingObserver("complete")
-    results = [MetricResult(metric_name="test", score=0.5)]
-
-    with pytest.raises(RuntimeError, match="Observer failed on complete"):
-        observer.on_metric_complete("test", results)
-
-
-def test_failing_observer_on_error():
-    """Failing observer raises exception on error."""
-    observer = FailingObserver("error")
-    error = ValueError("Original error")
-
-    with pytest.raises(RuntimeError, match="Observer failed on error"):
-        observer.on_metric_error("test", error)
 
 
 def test_observer_state_isolation():

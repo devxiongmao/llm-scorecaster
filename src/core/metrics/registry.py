@@ -44,6 +44,7 @@ class MetricRegistry:
                 logger.warning(
                     f"Implementations directory not found: {implementations_path}"
                 )
+                self._discovered = True  # Mark as discovered even if directory missing
                 return
 
             # Import the implementations package

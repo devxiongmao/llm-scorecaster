@@ -1,11 +1,12 @@
 ## Changelog
-### From v0.0.3 to HEAD
+### From v0.0.4 to HEAD
 
-- Bump actions/checkout from 4 to 5 (#13) (064ce18) by dependabot[bot]
-- XMDEV-478: Adds pylint, pyright and pytest to ci (#18) (bb05067) by Jon
-- XMDEV-477: Adds pylint to project (359e71d) by Jon Psaila
-- XMDEV-481: Adds pyright for type checking (8275e79) by Jon Psaila
-- XMDEV-145: Add black formatting (114dda0) by Jon Psaila
-- XMDEV-480: Fixes bug with changelog appending (#15) (e5d7f45) by Jon
-- XMDEV-135: Adds basic synchronous api with auth (#16) (7bdb28b) by Jon
+- XMDEV-491: Adds MIT license (#28) (6712519) by Jon
+- NO-JIRA: Remove unused enums and references (#27) (1faac05) by Jon
+- XMDEV-445: Adds rouge score processing (#26) (06f9d43) by Jon
+- XMDEV-486: Fixes deprecation warning related to settings (#24) (8dd7fcd) by Jon
+- XMDEV-483: Fix pyright errors or use a more appropriate message (#23) (14ff692) by Jon
+- XMDEV-446: Adds BLEU score processing (#22) (1e10c5a) by Jon
+- XMDEV-444: Adds metrics folder with base, registry, observer and bert_score (#21) (dcc29ca) by Jon
+- NO-JIRA: Fix issue with changelog generation (#20) (18a1e9e) by Jon
 

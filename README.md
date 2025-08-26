@@ -4,7 +4,7 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 
 ## Features
 
-- **Multiple Metrics**: Support for BERT Score, BLEU, ROUGE-L, ROUGE-1, ROUGE-2, and AlignScore
+- **Multiple Metrics**: Support for BERT Score, BLEU (multiple N-grams), ROUGE (1, 2, L and L-Sum) to name a few
 - **Synchronous API**: Real-time evaluation for immediate feedback
 - **Asynchronous API**: Batch processing for large-scale evaluation (coming soon)
 - **Simple Authentication**: API key-based authentication
@@ -111,7 +111,7 @@ curl -X POST "http://localhost:8000/api/v1/metrics/evaluate" \
         "candidate": "Hi there world, how are you doing?"
       }
     ],
-    "metrics": ["bert_score", "bleu", "rouge_l"],
+    "metrics": ["bert_score", "bleu_score", "rouge_score"],
     "batch_size": 32
   }'
 ```
@@ -130,27 +130,145 @@ curl -X POST "http://localhost:8000/api/v1/metrics/evaluate" \
       "metrics": [
         {
           "metric_name": "bert_score",
-          "score": 0.851,
+          "score": 0.6999493837356567,
           "details": {
-            "precision": 0.867,
-            "recall": 0.835,
-            "f1": 0.851
-          }
+            "precision": 0.6577,
+            "recall": 0.7418,
+            "f1": 0.6999
+          },
+          "error": null
         },
         {
-          "metric_name": "bleu",
-          "score": 0.423,
-          "details": null
+          "metric_name": "bleu_score",
+          "score": 0.0864,
+          "details": {
+            "bleu_score": 0.0864,
+            "bleu_score_100": 8.64,
+            "max_n": 4,
+            "bleu_1": 42.8571,
+            "bleu_2": 8.3333,
+            "bleu_3": 5,
+            "bleu_4": 3.125,
+            "brevity_penalty": 1,
+            "length_ratio": 1.1667,
+            "reference_length": 6,
+            "candidate_length": 7,
+            "tokenization": "13a",
+            "smoothing": "exp"
+          },
+          "error": null
         },
         {
-          "metric_name": "rouge_l",
-          "score": 0.678,
-          "details": null
+          "metric_name": "rouge_score",
+          "score": 0.4615,
+          "details": {
+            "rouge1": {
+              "precision": 0.4286,
+              "recall": 0.5,
+              "f1": 0.4615
+            },
+            "rouge2": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0
+            },
+            "rougeL": {
+              "precision": 0.4286,
+              "recall": 0.5,
+              "f1": 0.4615
+            },
+            "rougeLsum": {
+              "precision": 0.4286,
+              "recall": 0.5,
+              "f1": 0.4615
+            },
+            "rouge_types": [
+              "rouge1",
+              "rouge2",
+              "rougeL",
+              "rougeLsum"
+            ],
+            "use_stemmer": true,
+            "library": "rouge-score"
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "pair_index": 1,
+      "reference": "Hello world, how are you?",
+      "candidate": "Hi there world, how are you doing?",
+      "metrics": [
+        {
+          "metric_name": "bert_score",
+          "score": 0.646856427192688,
+          "details": {
+            "precision": 0.5851,
+            "recall": 0.7089,
+            "f1": 0.6469
+          },
+          "error": null
+        },
+        {
+          "metric_name": "bleu_score",
+          "score": 0.4671,
+          "details": {
+            "bleu_score": 0.4671,
+            "bleu_score_100": 46.71,
+            "max_n": 4,
+            "bleu_1": 66.6667,
+            "bleu_2": 50,
+            "bleu_3": 42.8571,
+            "bleu_4": 33.3333,
+            "brevity_penalty": 1,
+            "length_ratio": 1.2857,
+            "reference_length": 7,
+            "candidate_length": 9,
+            "tokenization": "13a",
+            "smoothing": "exp"
+          },
+          "error": null
+        },
+        {
+          "metric_name": "rouge_score",
+          "score": 0.6667,
+          "details": {
+            "rouge1": {
+              "precision": 0.5714,
+              "recall": 0.8,
+              "f1": 0.6667
+            },
+            "rouge2": {
+              "precision": 0.5,
+              "recall": 0.75,
+              "f1": 0.6
+            },
+            "rougeL": {
+              "precision": 0.5714,
+              "recall": 0.8,
+              "f1": 0.6667
+            },
+            "rougeLsum": {
+              "precision": 0.5714,
+              "recall": 0.8,
+              "f1": 0.6667
+            },
+            "rouge_types": [
+              "rouge1",
+              "rouge2",
+              "rougeL",
+              "rougeLsum"
+            ],
+            "use_stemmer": true,
+            "library": "rouge-score"
+          },
+          "error": null
         }
       ]
     }
   ],
-  "processing_time_seconds": 1.234
+  "processing_time_seconds": 4.017
 }
 ```
 
@@ -159,11 +277,8 @@ curl -X POST "http://localhost:8000/api/v1/metrics/evaluate" \
 Within the `src/core/metrics` folder lies all code related to specific metrics calculation. 
 
 - `bert_score`: Contextual embeddings-based evaluation
-- `bleu`: Bilingual Evaluation Understudy score
-- `rouge_l`: Recall-Oriented Understudy for Gisting Evaluation (Longest Common Subsequence)
-- `rouge_1`: ROUGE-1 (unigram overlap)
-- `rouge_2`: ROUGE-2 (bigram overlap)
-- `align_score`: Alignment-based evaluation score
+- `bleu_score`: Bilingual Evaluation Understudy score (multipl N-grams supported)
+- `rouge_l`: Recall-Oriented Understudy for Gisting Evaluation (Longest Common Subsequence). RROUGE-1 (unigram overlap), ROUGE-2 (bigram overlap), ROUGE-L and ROUGE-LSUM are supported
 
 ## Using a Metric Observer
 
@@ -263,5 +378,4 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 ## Support
 
 - **Documentation**: http://localhost:8000/docs (when running locally)
-- **Issues**: [GitHub Issues](link-to-your-issues)
-- **Discussions**: [GitHub Discussions](link-to-discussions)
+- **Issues**: [GitHub Issues](https://github.com/devxiongmao/llm-scorecaster/issues)

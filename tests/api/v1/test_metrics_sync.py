@@ -238,7 +238,6 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
             MetricType("bert_score"),
             MetricType("bleu_score"),
             MetricType("rouge_score"),
-            # MetricType("align_score"),
         ],
     ).model_dump()
 
@@ -258,7 +257,6 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
     assert "bert_score" in metric_names
     assert "bleu_score" in metric_names
     assert "rouge_score" in metric_names
-    # assert "align_score" in metric_names
 
     # Check that bert_score, bleu_score and rouge_score have details while others might not
     bert_metric = next(m for m in metrics if m["metric_name"] == "bert_score")
@@ -269,9 +267,6 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
 
     rouge_metric = next(m for m in metrics if m["metric_name"] == "rouge_score")
     assert rouge_metric["details"] is not None
-
-    # fastalign_metric = next(m for m in metrics if m["metric_name"] == "fastAlign")
-    # assert fastalign_metric["details"] is None
 
 
 def test_evaluate_metrics_response_message_content(

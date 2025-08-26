@@ -24,6 +24,7 @@ pyright = "^1.1.403"
 pylint = "^3.3.8"
 sacrebleu = "^2.5.1"
 rouge-score = "^0.1.2"
+mauve-text = "^0.4.0"
 
 
 [build-system]

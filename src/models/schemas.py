@@ -9,7 +9,6 @@ class MetricType(str, Enum):
     BERT_SCORE = "bert_score"
     BLEU = "bleu_score"
     ROUGE = "rouge_score"
-    ALIGN_SCORE = "align_score"
 
 
 class TextPair(BaseModel):

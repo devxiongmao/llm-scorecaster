@@ -26,7 +26,7 @@ The user has an application that uses LLMs and has already set up the llm scorec
 
    - Constructs POST request to `/api/v1/metrics/evaluate`
    - Includes Authorization header with his organization's API key: `Bearer his-org-api-key`
-   - Formats request body with text pairs and desired metrics: `["bert_score", "bleu", "rouge_l"]`
+   - Formats request body with text pairs and desired metrics: `["bert_score", "bleu", "rouge"]`
 
 3. **API Call Execution**
 

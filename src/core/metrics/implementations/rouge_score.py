@@ -46,7 +46,7 @@ class RougeMetric(BaseMetric):
 
     @property
     def name(self) -> str:
-        return "rouge"
+        return "rouge_score"
 
     @property
     def metric_type(self) -> MetricType:

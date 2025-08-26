@@ -67,7 +67,7 @@ class RougeMetric(BaseMetric):
         """Validate ROUGE type configuration."""
         valid_types = self.get_supported_rouge_types()
         invalid_types = set(rouge_types) - valid_types
-        if invalid_types:
+        if invalid_types or len(rouge_types) == 0:
             raise ValueError(
                 f"Invalid ROUGE types: {invalid_types}. "
                 f"Valid types: {sorted(valid_types)}"

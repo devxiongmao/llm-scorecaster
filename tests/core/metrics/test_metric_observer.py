@@ -114,11 +114,11 @@ def test_on_metric_start(observer):
 
 def test_on_pair_processed(observer, sample_result):
     """on_pair_processed records individual pair processing."""
-    observer.on_pair_processed("rouge_l", 3, sample_result)
+    observer.on_pair_processed("rouge", 3, sample_result)
 
     assert len(observer.pairs_processed) == 1
     metric_name, pair_index, stored_result = observer.pairs_processed[0]
-    assert metric_name == "rouge_l"
+    assert metric_name == "rouge"
     assert pair_index == 3
     assert stored_result == sample_result
 
@@ -136,11 +136,11 @@ def test_on_metric_complete(observer, sample_results):
 
 def test_on_metric_error(observer, test_error):
     """on_metric_error records error conditions."""
-    observer.on_metric_error("rouge_2", test_error)
+    observer.on_metric_error("rouge", test_error)
 
     assert len(observer.metric_errors) == 1
     metric_name, stored_error = observer.metric_errors[0]
-    assert metric_name == "rouge_2"
+    assert metric_name == "rouge"
     assert stored_error == test_error
 
 
@@ -312,8 +312,8 @@ def test_observer_state_isolation():
     [
         ("bert_score", 1),
         ("bleu_score", 10),
-        ("rouge_l", 100),
-        ("rouge_1", 0),  # Edge case: zero pairs
+        ("rouge", 100),
+        ("rouge", 0),  # Edge case: zero pairs
     ],
 )
 def test_on_metric_start_parameterized(observer, metric_name, total_pairs):

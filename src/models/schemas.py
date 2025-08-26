@@ -8,9 +8,7 @@ class MetricType(str, Enum):
 
     BERT_SCORE = "bert_score"
     BLEU = "bleu_score"
-    ROUGE_L = "rouge_l"
-    ROUGE_1 = "rouge_1"
-    ROUGE_2 = "rouge_2"
+    ROUGE = "rouge_score"
     ALIGN_SCORE = "align_score"
 
 

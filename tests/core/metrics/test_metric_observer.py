@@ -125,11 +125,11 @@ def test_on_pair_processed(observer, sample_result):
 
 def test_on_metric_complete(observer, sample_results):
     """on_metric_complete records completion with results."""
-    observer.on_metric_complete("align_score", sample_results)
+    observer.on_metric_complete("bert_score", sample_results)
 
     assert len(observer.metric_completes) == 1
     metric_name, stored_results = observer.metric_completes[0]
-    assert metric_name == "align_score"
+    assert metric_name == "bert_score"
     assert stored_results == sample_results
     assert len(stored_results) == 3
 

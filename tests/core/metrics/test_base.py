@@ -330,7 +330,6 @@ class TestMetricTypes:
             "bert_score",
             "bleu_score",
             "rouge_score",
-            "align_score",
         }
         actual_values = {mt.value for mt in MetricType}
         assert actual_values == expected_values

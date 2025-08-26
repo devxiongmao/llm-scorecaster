@@ -26,7 +26,7 @@ The user has an application that generates large volumes of LLM responses and wa
 
    - Constructs POST request to `/api/v1/metrics/evaluate-async`
    - Includes Authorization header with organization's API key: `Bearer org-analytics-key`
-   - Formats large request body with text pairs and multiple metrics: `["bert_score", "bleu", "rouge_l", "align_score"]`
+   - Formats large request body with text pairs and multiple metrics: `["bert_score", "bleu", "rouge", ...]`
 
 3. **Job Initialization**
 

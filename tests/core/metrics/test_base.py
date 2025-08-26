@@ -59,10 +59,10 @@ class TestBaseMetric:
 
     def test_concrete_implementation_properties(self):
         """Test that concrete implementations work correctly."""
-        metric = ConcreteMetric("my_metric", MetricType.ROUGE_1)
+        metric = ConcreteMetric("my_metric", MetricType.ROUGE)
 
         assert metric.name == "my_metric"
-        assert metric.metric_type == MetricType.ROUGE_1
+        assert metric.metric_type == MetricType.ROUGE
         assert metric.description == "my_metric evaluation metric"
         assert metric.requires_model_download is False
 
@@ -329,9 +329,7 @@ class TestMetricTypes:
         expected_values = {
             "bert_score",
             "bleu_score",
-            "rouge_l",
-            "rouge_1",
-            "rouge_2",
+            "rouge_score",
             "align_score",
         }
         actual_values = {mt.value for mt in MetricType}
@@ -341,11 +339,11 @@ class TestMetricTypes:
         """Test that different metric types can be used."""
         bert_metric = ConcreteMetric("bert_test", MetricType.BERT_SCORE)
         bleu_metric = ConcreteMetric("bleu_test", MetricType.BLEU)
-        rouge_metric = ConcreteMetric("rouge_test", MetricType.ROUGE_L)
+        rouge_metric = ConcreteMetric("rouge_test", MetricType.ROUGE)
 
         assert bert_metric.metric_type == MetricType.BERT_SCORE
         assert bleu_metric.metric_type == MetricType.BLEU
-        assert rouge_metric.metric_type == MetricType.ROUGE_L
+        assert rouge_metric.metric_type == MetricType.ROUGE
 
 
 # Additional fixtures and parameterized tests
@@ -354,7 +352,7 @@ class TestMetricTypes:
 @pytest.fixture
 def sample_metric():
     """Fixture providing a sample metric instance."""
-    return ConcreteMetric("sample", MetricType.ROUGE_1)
+    return ConcreteMetric("sample", MetricType.ROUGE)
 
 
 @pytest.fixture
@@ -397,7 +395,7 @@ def complex_text_pairs():
     [
         ("bert_accuracy", MetricType.BERT_SCORE, "bert_accuracy evaluation metric"),
         ("bleu_4", MetricType.BLEU, "bleu_4 evaluation metric"),
-        ("rouge_score", MetricType.ROUGE_L, "rouge_score evaluation metric"),
+        ("rouge_score", MetricType.ROUGE, "rouge_score evaluation metric"),
     ],
 )
 def test_metric_descriptions(metric_name, metric_type, expected_description):

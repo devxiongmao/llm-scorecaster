@@ -32,20 +32,20 @@ class MockBleuMetric(BaseMetric):
         return Mock(score=0.5)
 
 
-class MockRougeLMetric(BaseMetric):
-    """Mock ROUGE-L metric for testing."""
+class MockRougeMetric(BaseMetric):
+    """Mock ROUGE metric for testing."""
 
     @property
     def name(self) -> str:
-        return "rouge_l"
+        return "rouge"
 
     @property
     def metric_type(self) -> MetricType:
-        return MetricType.ROUGE_L
+        return MetricType.ROUGE
 
     @property
     def description(self) -> str:
-        return "Mock ROUGE-L metric"
+        return "Mock ROUGE metric"
 
     @property
     def requires_model_download(self) -> bool:
@@ -184,7 +184,7 @@ def test_discover_metrics_finds_valid_metrics():
     registry = create_fresh_registry()
 
     # Setup mocks
-    mock_bleu_module = setup_mock_module_with_metrics(MockBleuMetric, MockRougeLMetric)
+    mock_bleu_module = setup_mock_module_with_metrics(MockBleuMetric, MockRougeMetric)
     mock_modules = setup_pkgutil_mock(["bleu_rouge"])
 
     with (
@@ -197,9 +197,9 @@ def test_discover_metrics_finds_valid_metrics():
         # Should have discovered both metrics
         assert len(registry._metrics) == 2
         assert "bleu" in registry._metrics
-        assert "rouge_l" in registry._metrics
+        assert "rouge" in registry._metrics
         assert registry._metrics["bleu"] is MockBleuMetric
-        assert registry._metrics["rouge_l"] is MockRougeLMetric
+        assert registry._metrics["rouge"] is MockRougeMetric
 
 
 def test_discover_metrics_ignores_non_metric_classes():
@@ -359,14 +359,14 @@ def test_get_metrics_returns_multiple_instances():
     """get_metrics returns dictionary of multiple metric instances."""
     registry = create_fresh_registry()
     registry._metrics["bleu"] = MockBleuMetric
-    registry._metrics["rouge_l"] = MockRougeLMetric
+    registry._metrics["rouge"] = MockRougeMetric
     registry._discovered = True
 
-    metrics = registry.get_metrics(["bleu", "rouge_l"])
+    metrics = registry.get_metrics(["bleu", "rouge"])
 
     assert len(metrics) == 2
     assert isinstance(metrics["bleu"], MockBleuMetric)
-    assert isinstance(metrics["rouge_l"], MockRougeLMetric)
+    assert isinstance(metrics["rouge"], MockRougeMetric)
 
 
 def test_get_metrics_handles_empty_list():
@@ -385,12 +385,12 @@ def test_list_available_metrics():
     """list_available_metrics returns list of all registered metric names."""
     registry = create_fresh_registry()
     registry._metrics["bleu"] = MockBleuMetric
-    registry._metrics["rouge_l"] = MockRougeLMetric
+    registry._metrics["rouge"] = MockRougeMetric
     registry._discovered = True
 
     available = registry.list_available_metrics()
 
-    assert set(available) == {"bleu", "rouge_l"}
+    assert set(available) == {"bleu", "rouge"}
 
 
 def test_list_available_metrics_auto_discovers():
@@ -433,16 +433,16 @@ def test_get_all_metrics_info():
     """get_all_metrics_info returns information for all available metrics."""
     registry = create_fresh_registry()
     registry._metrics["bleu"] = MockBleuMetric
-    registry._metrics["rouge_l"] = MockRougeLMetric
+    registry._metrics["rouge"] = MockRougeMetric
     registry._discovered = True
 
     all_info = registry.get_all_metrics_info()
 
     assert len(all_info) == 2
     assert "bleu" in all_info
-    assert "rouge_l" in all_info
+    assert "rouge" in all_info
     assert all_info["bleu"]["name"] == "bleu"
-    assert all_info["rouge_l"]["requires_model_download"] is True
+    assert all_info["rouge"]["requires_model_download"] is True
 
 
 # Validation tests
@@ -480,13 +480,13 @@ def test_validate_metrics():
     """validate_metrics separates valid and invalid metric names."""
     registry = create_fresh_registry()
     registry._metrics["bleu"] = MockBleuMetric
-    registry._metrics["rouge_l"] = MockRougeLMetric
+    registry._metrics["rouge"] = MockRougeMetric
     registry._discovered = True
 
-    metric_names = ["bleu", "nonexistent", "rouge_l", "another_invalid"]
+    metric_names = ["bleu", "nonexistent", "rouge", "another_invalid"]
     valid, invalid = registry.validate_metrics(metric_names)
 
-    assert set(valid) == {"bleu", "rouge_l"}
+    assert set(valid) == {"bleu", "rouge"}
     assert set(invalid) == {"nonexistent", "another_invalid"}
 
 
@@ -531,7 +531,7 @@ def test_reload_metrics():
     registry._instances["old_metric"] = MockBleuMetric()
     registry._discovered = True
 
-    mock_module = setup_mock_module_with_metrics(MockRougeLMetric)
+    mock_module = setup_mock_module_with_metrics(MockRougeMetric)
     mock_modules = setup_pkgutil_mock(["rouge"])
 
     with (
@@ -544,7 +544,7 @@ def test_reload_metrics():
         # Should have cleared old state and discovered new metrics
         assert "old_metric" not in registry._metrics
         assert "old_metric" not in registry._instances
-        assert "rouge_l" in registry._metrics
+        assert "rouge" in registry._metrics
         assert registry._discovered is True
 
 
@@ -575,7 +575,7 @@ def test_discover_metrics_handles_packages_in_implementations():
     ]
 
     mock_metric_module = setup_mock_module_with_metrics(MockBleuMetric)
-    mock_another_module = setup_mock_module_with_metrics(MockRougeLMetric)
+    mock_another_module = setup_mock_module_with_metrics(MockRougeMetric)
 
     def import_side_effect(module_name):
         if "metric_module" in module_name:
@@ -595,7 +595,7 @@ def test_discover_metrics_handles_packages_in_implementations():
         # Should have found metrics from both modules but skipped the package
         assert len(registry._metrics) == 2
         assert "bleu" in registry._metrics
-        assert "rouge_l" in registry._metrics
+        assert "rouge" in registry._metrics
 
 
 def test_discover_metrics_handles_discovery_exception():

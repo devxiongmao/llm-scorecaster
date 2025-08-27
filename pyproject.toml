@@ -65,7 +65,6 @@ disable = [
   "W0107", # unnecessary-pass
   "W0212", # protected-access
   "W0231", # super-init-not-called
-  "W0611", # unused-import
   "W0612", # unused-variable
   "W0613", # unused-argument
   "W0621", # redefined-outer-name

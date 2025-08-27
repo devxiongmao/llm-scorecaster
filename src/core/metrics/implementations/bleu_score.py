@@ -40,6 +40,7 @@ class BleuMetric(BaseMetric):
         self.tokenize = tokenize
         self.lowercase = lowercase
         self._sacrebleu_loaded = False
+        self.sacrebleu = None
 
     @property
     def name(self) -> str:
@@ -67,6 +68,7 @@ class BleuMetric(BaseMetric):
         try:
             import sacrebleu
 
+            self.sacrebleu = sacrebleu
             self._sacrebleu_loaded = True
             logger.info("SacreBLEU loaded successfully")
 
@@ -93,10 +95,8 @@ class BleuMetric(BaseMetric):
         self._ensure_sacrebleu()
 
         try:
-            import sacrebleu
-
-            # Create BLEU object with configuration
-            bleu = sacrebleu.BLEU(
+            assert self.sacrebleu is not None
+            bleu = self.sacrebleu.BLEU(
                 max_ngram_order=self.max_n,
                 smooth_method=self.smooth_method,
                 smooth_value=self.smooth_value,
@@ -170,10 +170,8 @@ class BleuMetric(BaseMetric):
         self._notify_start(len(text_pairs))
 
         try:
-            import sacrebleu
-
-            # Create BLEU object once for efficiency
-            bleu = sacrebleu.BLEU(
+            assert self.sacrebleu is not None
+            bleu = self.sacrebleu.BLEU(
                 max_ngram_order=self.max_n,
                 smooth_method=self.smooth_method,
                 smooth_value=self.smooth_value,

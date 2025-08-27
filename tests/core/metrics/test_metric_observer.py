@@ -84,7 +84,7 @@ def test_error():
 def test_cannot_instantiate_abstract_class():
     """MetricObserver cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        MetricObserver()  # type: ignore[abstract]
+        MetricObserver()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_concrete_implementation_works(observer):
@@ -228,7 +228,7 @@ def test_missing_on_metric_start():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver1()  # type: ignore[abstract]
+        IncompleteObserver1()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_pair_processed():
@@ -247,7 +247,7 @@ def test_missing_on_pair_processed():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver2()  # type: ignore[abstract]
+        IncompleteObserver2()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_metric_complete():
@@ -266,7 +266,7 @@ def test_missing_on_metric_complete():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver3()  # type: ignore[abstract]
+        IncompleteObserver3()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_metric_error():
@@ -287,7 +287,7 @@ def test_missing_on_metric_error():
             ) -> None:
                 pass
 
-        IncompleteObserver4()  # type: ignore[abstract]
+        IncompleteObserver4()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_observer_state_isolation():

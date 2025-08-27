@@ -53,7 +53,6 @@ disable = [
   "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "R0913", # too-many-arguments
-  "R1702", # too-many-nested-blocks
   "W0212", # protected-access
   "W0231", # super-init-not-called
   "W0613", # unused-argument

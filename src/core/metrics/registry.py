@@ -21,6 +21,35 @@ class MetricRegistry:
         self._instances: Dict[str, BaseMetric] = {}
         self._discovered = False
 
+    def _get_implementations_path(self) -> Path:
+        """Get the implementations directory path."""
+        return Path(__file__).parent / "implementations"
+
+    def _discover_module_metrics(
+        self, module_name: str, implementations_pkg: str
+    ) -> None:
+        """Discover metrics in a single module."""
+        full_module_name = f"{implementations_pkg}.{module_name}"
+
+        try:
+            module = importlib.import_module(full_module_name)
+            self._register_metrics_from_module(module)
+        except Exception as e:
+            logger.error("Failed to import %s: %s", full_module_name, e)
+
+    def _register_metrics_from_module(self, module) -> None:
+        """Register all BaseMetric subclasses found in a module."""
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, BaseMetric)
+                and attr is not BaseMetric
+            ):
+                self._register_metric_class(attr)
+                logger.info("Discovered metric: %s", attr.__name__)
+
     def discover_metrics(self, force_reload: bool = False) -> None:
         """
         Automatically discover all metric implementations.
@@ -37,8 +66,7 @@ class MetricRegistry:
         logger.info("Discovering metric implementations...")
 
         try:
-            # Get the implementations package path
-            implementations_path = Path(__file__).parent / "implementations"
+            implementations_path = self._get_implementations_path()
 
             if not implementations_path.exists():
                 logger.warning(
@@ -55,27 +83,7 @@ class MetricRegistry:
                 [str(implementations_path)]
             ):
                 if not ispkg:  # Skip packages, only import modules
-                    full_module_name = f"{implementations_pkg}.{module_name}"
-
-                    try:
-                        module = importlib.import_module(full_module_name)
-
-                        # Find all classes in the module that inherit from BaseMetric
-                        for attr_name in dir(module):
-                            attr = getattr(module, attr_name)
-
-                            if (
-                                isinstance(attr, type)
-                                and issubclass(attr, BaseMetric)
-                                and attr is not BaseMetric
-                            ):
-                                # Register the metric class
-                                self._register_metric_class(attr)
-                                logger.info("Discovered metric: %s", attr.__name__)
-
-                    except Exception as e:
-                        logger.error("Failed to import %s: %s", full_module_name, e)
-                        continue
+                    self._discover_module_metrics(module_name, implementations_pkg)
 
             self._discovered = True
             logger.info("Discovery complete. Found %d metrics.", len(self._metrics))

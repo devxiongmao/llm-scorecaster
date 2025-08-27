@@ -59,7 +59,6 @@ disable = [
   "R0903", # too-few-public-methods
   "R0913", # too-many-arguments
   "R0914", # too-many-locals
-  "R0917", # too-many-positional-arguments
   "R1702", # too-many-nested-blocks
   "W0107", # unnecessary-pass
   "W0212", # protected-access

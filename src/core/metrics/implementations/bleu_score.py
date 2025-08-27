@@ -17,6 +17,7 @@ class BleuMetric(BaseMetric):
 
     def __init__(
         self,
+        *,
         max_n: int = 4,
         smooth_method: str = "exp",
         smooth_value: float = 0.0,
@@ -245,6 +246,7 @@ class BleuMetric(BaseMetric):
 
     def configure(
         self,
+        *,
         max_n: Optional[int] = None,
         smooth_method: Optional[str] = None,
         smooth_value: Optional[float] = None,

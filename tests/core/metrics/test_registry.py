@@ -580,10 +580,9 @@ def test_discover_metrics_handles_packages_in_implementations():
     def import_side_effect(module_name):
         if "metric_module" in module_name:
             return mock_metric_module
-        elif "another_module" in module_name:
+        if "another_module" in module_name:
             return mock_another_module
-        else:
-            raise ImportError("Should not import packages")
+        raise ImportError("Should not import packages")
 
     with (
         patch("pathlib.Path.exists", return_value=True),

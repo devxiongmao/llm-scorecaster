@@ -62,7 +62,6 @@ disable = [
   "R0914", # too-many-locals
   "R0917", # too-many-positional-arguments
   "R1702", # too-many-nested-blocks
-  "R1705", # no-else-return
   "W0107", # unnecessary-pass
   "W0212", # protected-access
   "W0231", # super-init-not-called

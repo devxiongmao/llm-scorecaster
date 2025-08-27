@@ -9,8 +9,7 @@ def get_version() -> str:
         version_file = Path(__file__).parent.parent.parent / "VERSION"
         if version_file.exists():
             return version_file.read_text().strip()
-        else:
-            return "1.0.0"
+        return "1.0.0"
     except Exception:
         return "1.0.0"
 

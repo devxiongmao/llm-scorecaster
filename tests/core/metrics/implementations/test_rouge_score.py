@@ -441,20 +441,20 @@ def test_compute_batch_multiple_pairs(
                 "rougeL": Mock(precision=0.85, recall=0.75, fmeasure=0.7955),
                 "rougeLsum": Mock(precision=0.8, recall=0.7, fmeasure=0.7467),
             }
-        elif "Python" in ref:
+        if "Python" in ref:
             return {
                 "rouge1": Mock(precision=0.8, recall=0.75, fmeasure=0.7742),
                 "rouge2": Mock(precision=0.6, recall=0.65, fmeasure=0.6244),
                 "rougeL": Mock(precision=0.7, recall=0.72, fmeasure=0.7099),
                 "rougeLsum": Mock(precision=0.68, recall=0.7, fmeasure=0.6898),
             }
-        else:  # Testing
-            return {
-                "rouge1": Mock(precision=0.75, recall=0.7, fmeasure=0.7246),
-                "rouge2": Mock(precision=0.5, recall=0.55, fmeasure=0.5238),
-                "rougeL": Mock(precision=0.65, recall=0.68, fmeasure=0.6646),
-                "rougeLsum": Mock(precision=0.6, recall=0.65, fmeasure=0.6244),
-            }
+
+        return {
+            "rouge1": Mock(precision=0.75, recall=0.7, fmeasure=0.7246),
+            "rouge2": Mock(precision=0.5, recall=0.55, fmeasure=0.5238),
+            "rougeL": Mock(precision=0.65, recall=0.68, fmeasure=0.6646),
+            "rougeLsum": Mock(precision=0.6, recall=0.65, fmeasure=0.6244),
+        }
 
     mock_scorer.score.side_effect = mock_score_side_effect
     mock_scorer_class.return_value = mock_scorer
@@ -493,13 +493,13 @@ def test_compute_batch_handles_individual_errors(
                 "rouge1": Mock(precision=0.8, recall=0.75, fmeasure=0.7742),
                 "rougeL": Mock(precision=0.7, recall=0.72, fmeasure=0.7099),
             }
-        elif "Python" in ref:
+        if "Python" in ref:
             raise RuntimeError("Processing failed for Python text")
-        else:  # Testing
-            return {
-                "rouge1": Mock(precision=0.75, recall=0.7, fmeasure=0.7246),
-                "rougeL": Mock(precision=0.65, recall=0.68, fmeasure=0.6646),
-            }
+
+        return {
+            "rouge1": Mock(precision=0.75, recall=0.7, fmeasure=0.7246),
+            "rougeL": Mock(precision=0.65, recall=0.68, fmeasure=0.6646),
+        }
 
     mock_scorer.score.side_effect = mock_score_side_effect
     mock_scorer_class.return_value = mock_scorer

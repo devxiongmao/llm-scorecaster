@@ -1,6 +1,5 @@
-import pytest
 from typing import List
-
+import pytest
 from src.core.metrics.metric_observer import MetricObserver
 from src.models.schemas import MetricResult
 

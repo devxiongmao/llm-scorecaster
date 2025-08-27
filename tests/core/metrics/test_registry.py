@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import Mock, patch
 from typing import Any
+
+import pytest
 from src.core.metrics.registry import MetricRegistry, metric_registry
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType

@@ -50,7 +50,6 @@ disable = [
   "C0115", # missing-class-docstring
   "C0116", # missing-function-docstring
   "C0301", # line-too-long
-  "C0411", # wrong-import-order
   "C0415", # import-outside-toplevel
   "C1803", # use-implicit-booleaness-not-comparison
   "E1135", # unsupported-membership-test

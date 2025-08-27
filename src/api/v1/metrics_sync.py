@@ -5,6 +5,9 @@ This module provides the routes used for the synchronous operation of the API.
 It receives requests and constructs responses that provide back the metric scores
 based on user queries.
 """
+import time
+import asyncio
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.models.schemas import (
@@ -15,9 +18,6 @@ from src.models.schemas import (
 from src.api.auth.dependencies import verify_api_key
 from src.core.metrics.registry import metric_registry
 from src.models.schemas import TextPair
-import time
-import asyncio
-from typing import List
 
 router = APIRouter()
 

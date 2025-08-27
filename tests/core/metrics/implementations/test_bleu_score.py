@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import Mock, patch
+import pytest
 
 from src.core.metrics.implementations.bleu_score import BleuMetric
 from src.models.schemas import MetricType, MetricResult, TextPair

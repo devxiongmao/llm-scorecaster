@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Tuple, Type
-from src.core.metrics.base import BaseMetric
 import importlib
 import pkgutil
 from pathlib import Path
 import logging
+from src.core.metrics.base import BaseMetric
 
 logger = logging.getLogger(__name__)
 

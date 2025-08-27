@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import Mock
+import pytest
 
 from src.core.metrics.base import BaseMetric
 from src.core.metrics.metric_observer import MetricObserver

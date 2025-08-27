@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Set, Optional
+import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
-import logging
 
 logger = logging.getLogger(__name__)
 

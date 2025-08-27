@@ -52,9 +52,7 @@ disable = [
   "C0415", # import-outside-toplevel
   "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
-  "R0903", # too-few-public-methods
   "R0913", # too-many-arguments
-  "R0914", # too-many-locals
   "R1702", # too-many-nested-blocks
   "W0107", # unnecessary-pass
   "W0212", # protected-access

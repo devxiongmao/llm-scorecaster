@@ -60,6 +60,47 @@ class BertScoreMetric(BaseMetric):
             logger.error("Failed to load BERT Score model: %s", e)
             raise RuntimeError(f"Failed to initialize BERT Score: {e}")
 
+    def _create_bert_score_result(
+        self, precision: float, recall: float, f1: float
+    ) -> MetricResult:
+        """Create a MetricResult from BERT Score components."""
+        return MetricResult(
+            metric_name=self.name,
+            score=f1,  # Use F1 as the primary score
+            details={
+                "precision": round(precision, 4),
+                "recall": round(recall, 4),
+                "f1": round(f1, 4),
+            },
+        )
+
+    def _create_error_result(self, error: Exception) -> MetricResult:
+        """Create a MetricResult for errors."""
+        return MetricResult(metric_name=self.name, score=0.0, error=str(error))
+
+    def _process_bert_scores(
+        self, candidates: List[str], references: List[str]
+    ) -> List[MetricResult]:
+        """Process BERT scores for lists of candidates and references."""
+        # Compute BERT Score for the batch/single pair
+        assert self._scorer is not None
+
+        precision, recall, f1 = self._scorer.score(candidates, references)
+
+        # Create results for each pair
+        results = []
+        for i in range(len(candidates)):
+            precision_score = float(precision[i])
+            recall_score = float(recall[i])
+            f1_score = float(f1[i])
+
+            result = self._create_bert_score_result(
+                precision_score, recall_score, f1_score
+            )
+            results.append(result)
+
+        return results
+
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
         """
         Compute BERT Score for a single text pair.
@@ -72,33 +113,14 @@ class BertScoreMetric(BaseMetric):
             MetricResult: BERT Score result with precision, recall, and F1
         """
         self._load_model()
-
-        # Type assertion since _load_model ensures _scorer is not None
-        # pyright fix
         assert self._scorer is not None
 
         try:
-            # Compute BERT Score
-            precision, recall, f1 = self._scorer.score([candidate], [reference])
-
-            # Extract scalar values
-            precision_score = float(precision[0])
-            recall_score = float(recall[0])
-            f1_score = float(f1[0])
-
-            return MetricResult(
-                metric_name=self.name,
-                score=f1_score,  # Use F1 as the primary score
-                details={
-                    "precision": round(precision_score, 4),
-                    "recall": round(recall_score, 4),
-                    "f1": round(f1_score, 4),
-                },
-            )
-
+            results = self._process_bert_scores([candidate], [reference])
+            return results[0]  # Return the single result
         except Exception as e:
             logger.error("Error computing BERT Score: %s", e)
-            return MetricResult(metric_name=self.name, score=0.0, error=str(e))
+            return self._create_error_result(e)
 
     def compute_batch(
         self, text_pairs: List[TextPair], batch_size: int = 32
@@ -117,9 +139,6 @@ class BertScoreMetric(BaseMetric):
             List[MetricResult]: List of BERT Score results
         """
         self._load_model()
-
-        # Type assertion since _load_model ensures _scorer is not None
-        # pyright fix
         assert self._scorer is not None
 
         if not text_pairs:
@@ -138,27 +157,12 @@ class BertScoreMetric(BaseMetric):
                     candidates = [pair.candidate for pair in batch]
                     references = [pair.reference for pair in batch]
 
-                    # Compute BERT Score for the batch
-                    precision, recall, f1 = self._scorer.score(candidates, references)
+                    # Process the batch using helper method
+                    batch_results = self._process_bert_scores(candidates, references)
 
-                    # Process results
-                    for j, pair in enumerate(batch):
-                        precision_score = float(precision[j])
-                        recall_score = float(recall[j])
-                        f1_score = float(f1[j])
-
-                        result = MetricResult(
-                            metric_name=self.name,
-                            score=f1_score,
-                            details={
-                                "precision": round(precision_score, 4),
-                                "recall": round(recall_score, 4),
-                                "f1": round(f1_score, 4),
-                            },
-                        )
+                    # Add results and notify observers
+                    for j, result in enumerate(batch_results):
                         results.append(result)
-
-                        # Notify observers
                         self._notify_pair_processed(i + j, result)
 
                 except Exception as e:
@@ -168,9 +172,7 @@ class BertScoreMetric(BaseMetric):
 
                     # Create error results for the batch
                     for j, pair in enumerate(batch):
-                        error_result = MetricResult(
-                            metric_name=self.name, score=0.0, error=str(e)
-                        )
+                        error_result = self._create_error_result(e)
                         results.append(error_result)
                         self._notify_pair_processed(i + j, error_result)
 

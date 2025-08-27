@@ -19,13 +19,11 @@ class BaseMetric(ABC):
     @abstractmethod
     def name(self) -> str:
         """Return the metric name identifier."""
-        pass
 
     @property
     @abstractmethod
     def metric_type(self) -> MetricType:
         """Return the metric type enum."""
-        pass
 
     @property
     def description(self) -> str:
@@ -49,7 +47,6 @@ class BaseMetric(ABC):
         Returns:
             MetricResult: The computed metric result
         """
-        pass
 
     def compute_batch(
         self, text_pairs: List[TextPair], batch_size: int = 32

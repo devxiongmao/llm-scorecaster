@@ -214,6 +214,12 @@ def test_missing_on_metric_start():
     with pytest.raises(TypeError):
 
         class IncompleteObserver1(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_start method.
+            """
+
             def on_pair_processed(
                 self, metric_name: str, pair_index: int, result: MetricResult
             ) -> None:
@@ -235,6 +241,12 @@ def test_missing_on_pair_processed():
     with pytest.raises(TypeError):
 
         class IncompleteObserver2(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_pair_processed method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 
@@ -254,6 +266,12 @@ def test_missing_on_metric_complete():
     with pytest.raises(TypeError):
 
         class IncompleteObserver3(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_complete method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 
@@ -273,6 +291,12 @@ def test_missing_on_metric_error():
     with pytest.raises(TypeError):
 
         class IncompleteObserver4(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_error method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 

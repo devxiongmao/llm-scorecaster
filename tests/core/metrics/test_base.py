@@ -278,6 +278,12 @@ class TestMetricSubclassRequirements:
         with pytest.raises(TypeError):
 
             class IncompleteMetric1(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the name property.
+                """
+
                 @property
                 def metric_type(self) -> MetricType:
                     return MetricType.BERT_SCORE
@@ -294,6 +300,12 @@ class TestMetricSubclassRequirements:
         with pytest.raises(TypeError):
 
             class IncompleteMetric2(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the metric_type property.
+                """
+
                 @property
                 def name(self) -> str:
                     return "test"
@@ -310,6 +322,12 @@ class TestMetricSubclassRequirements:
         with pytest.raises(TypeError):
 
             class IncompleteMetric3(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the compute_single method.
+                """
+
                 @property
                 def name(self) -> str:
                     return "test"

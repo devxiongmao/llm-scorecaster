@@ -1,3 +1,11 @@
+"""
+Version 1 of the synchronous API for the LLM-scorecaster.
+
+This module provides the routes used for the synchronous operation of the API.
+It receives requests and constructs responses that provide back the metric scores
+based on user queries.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.models.schemas import (
     MetricsRequest,

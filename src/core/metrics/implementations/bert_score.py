@@ -57,7 +57,7 @@ class BertScoreMetric(BaseMetric):
                 "Install with: pip install bert-score"
             )
         except Exception as e:
-            logger.error(f"Failed to load BERT Score model: {e}")
+            logger.error("Failed to load BERT Score model: %s", e)
             raise RuntimeError(f"Failed to initialize BERT Score: {e}")
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
@@ -97,7 +97,7 @@ class BertScoreMetric(BaseMetric):
             )
 
         except Exception as e:
-            logger.error(f"Error computing BERT Score: {e}")
+            logger.error("Error computing BERT Score: %s", e)
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
@@ -162,7 +162,9 @@ class BertScoreMetric(BaseMetric):
                         self._notify_pair_processed(i + j, result)
 
                 except Exception as e:
-                    logger.error(f"Error processing batch {i // batch_size + 1}: {e}")
+                    logger.error(
+                        "Error processing batch %d: %s", i // batch_size + 1, e
+                    )
 
                     # Create error results for the batch
                     for j, pair in enumerate(batch):

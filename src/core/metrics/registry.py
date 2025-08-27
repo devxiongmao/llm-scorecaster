@@ -42,7 +42,7 @@ class MetricRegistry:
 
             if not implementations_path.exists():
                 logger.warning(
-                    f"Implementations directory not found: {implementations_path}"
+                    "Implementations directory not found: %s", implementations_path
                 )
                 self._discovered = True  # Mark as discovered even if directory missing
                 return
@@ -71,17 +71,17 @@ class MetricRegistry:
                             ):
                                 # Register the metric class
                                 self._register_metric_class(attr)
-                                logger.info(f"Discovered metric: {attr.__name__}")
+                                logger.info("Discovered metric: %s", attr.__name__)
 
                     except Exception as e:
-                        logger.error(f"Failed to import {full_module_name}: {e}")
+                        logger.error("Failed to import %s: %s", full_module_name, e)
                         continue
 
             self._discovered = True
-            logger.info(f"Discovery complete. Found {len(self._metrics)} metrics.")
+            logger.info("Discovery complete. Found %d metrics.", len(self._metrics))
 
         except Exception as e:
-            logger.error(f"Error during metric discovery: {e}")
+            logger.error("Error during metric discovery: %s", e)
             raise
 
     def _register_metric_class(self, metric_class: Type[BaseMetric]) -> None:
@@ -93,7 +93,7 @@ class MetricRegistry:
             self._metrics[metric_name] = metric_class
         except Exception as e:
             logger.error(
-                f"Failed to register metric class {metric_class.__name__}: {e}"
+                "Failed to register metric class %s: %s", metric_class.__name__, e
             )
 
     def register_metric(self, metric_class: Type[BaseMetric]) -> None:
@@ -132,7 +132,7 @@ class MetricRegistry:
                 self._instances[metric_name] = instance
                 return instance
             except Exception as e:
-                logger.error(f"Failed to instantiate metric {metric_name}: {e}")
+                logger.error("Failed to instantiate metric %s: %s", metric_name, e)
                 raise ValueError(f"Failed to create metric instance: {metric_name}")
 
         raise ValueError(f"Unknown metric: {metric_name}")

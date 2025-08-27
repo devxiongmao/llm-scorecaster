@@ -76,7 +76,7 @@ class BleuMetric(BaseMetric):
                 "Install with: poetry add sacrebleu"
             )
         except Exception as e:
-            logger.error(f"Failed to load SacreBLEU: {e}")
+            logger.error("Failed to load SacreBLEU: %s", e)
             raise RuntimeError(f"Failed to initialize BLEU Score: {e}")
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
@@ -142,7 +142,7 @@ class BleuMetric(BaseMetric):
             )
 
         except Exception as e:
-            logger.error(f"Error computing BLEU Score: {e}")
+            logger.error("Error computing BLEU Score: %s", e)
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
@@ -218,7 +218,7 @@ class BleuMetric(BaseMetric):
                     self._notify_pair_processed(i, result)
 
                 except Exception as e:
-                    logger.error(f"Error processing pair {i}: {e}")
+                    logger.error("Error processing pair %d: %s", i, e)
                     error_result = MetricResult(
                         metric_name=self.name, score=0.0, error=str(e)
                     )
@@ -276,6 +276,8 @@ class BleuMetric(BaseMetric):
             self.lowercase = lowercase
 
         logger.info(
-            f"BLEU configuration updated: max_n={self.max_n}, "
-            f"tokenize={self.tokenize}, smooth_method={self.smooth_method}"
+            "BLEU configuration updated: max_n=%s, tokenize=%s, smooth_method=%s",
+            self.max_n,
+            self.tokenize,
+            self.smooth_method,
         )

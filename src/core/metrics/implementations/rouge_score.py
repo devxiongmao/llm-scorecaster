@@ -87,7 +87,7 @@ class RougeMetric(BaseMetric):
             )
             self._rouge_score_loaded = True
             logger.info(
-                f"ROUGE scorer loaded successfully with types: {self.rouge_types}"
+                "ROUGE scorer loaded successfully with types: %s", self.rouge_types
             )
 
         except ImportError:
@@ -96,7 +96,7 @@ class RougeMetric(BaseMetric):
                 "Install with: pip install rouge-score"
             )
         except Exception as e:
-            logger.error(f"Failed to load ROUGE scorer: {e}")
+            logger.error("Failed to load ROUGE scorer: %s", e)
             raise RuntimeError(f"Failed to initialize ROUGE scorer: {e}")
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
@@ -162,7 +162,7 @@ class RougeMetric(BaseMetric):
             )
 
         except Exception as e:
-            logger.error(f"Error computing ROUGE scores: {e}")
+            logger.error("Error computing ROUGE scores: %s", e)
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
@@ -250,7 +250,7 @@ class RougeMetric(BaseMetric):
                             self._notify_pair_processed(i + j, result)
 
                         except Exception as e:
-                            logger.error(f"Error processing pair {i + j}: {e}")
+                            logger.error("Error processing pair %d: %s", i + j, e)
                             error_result = MetricResult(
                                 metric_name=self.name, score=0.0, error=str(e)
                             )
@@ -258,7 +258,9 @@ class RougeMetric(BaseMetric):
                             self._notify_pair_processed(i + j, error_result)
 
                 except Exception as e:
-                    logger.error(f"Error processing batch {i // batch_size + 1}: {e}")
+                    logger.error(
+                        "Error processing batch %d: %s", i // batch_size + 1, e
+                    )
 
                     # Create error results for any remaining pairs in the batch
                     for j, pair in enumerate(batch):
@@ -318,8 +320,9 @@ class RougeMetric(BaseMetric):
             self._rouge_score_loaded = False
             self._scorer = None
             logger.info(
-                f"ROUGE configuration updated: rouge_types={self.rouge_types}, "
-                f"use_stemmer={self.use_stemmer}"
+                "ROUGE configuration updated: rouge_types=%s, use_stemmer=%s",
+                self.rouge_types,
+                self.use_stemmer,
             )
 
     def get_supported_rouge_types(self) -> Set[str]:

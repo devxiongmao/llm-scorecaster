@@ -42,7 +42,7 @@ def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]
         pair_results = []
 
         # Compute each requested metric for this text pair
-        for metric_name, metric_instance in metrics.items():
+        for _, metric_instance in metrics.items():
             result = metric_instance.compute_single(
                 text_pair.reference, text_pair.candidate
             )

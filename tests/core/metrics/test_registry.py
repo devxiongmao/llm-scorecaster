@@ -512,7 +512,7 @@ def test_clear_cache():
     registry._discovered = True
 
     # Create cached instance
-    instance = registry.get_metric("bleu")
+    registry.get_metric("bleu")
     assert "bleu" in registry._instances
 
     # Clear cache

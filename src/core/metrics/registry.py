@@ -51,7 +51,7 @@ class MetricRegistry:
             implementations_pkg = "src.core.metrics.implementations"
 
             # Iterate through all modules in the implementations package
-            for finder, module_name, ispkg in pkgutil.iter_modules(
+            for _, module_name, ispkg in pkgutil.iter_modules(
                 [str(implementations_path)]
             ):
                 if not ispkg:  # Skip packages, only import modules

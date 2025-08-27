@@ -5,6 +5,7 @@ This module provides the routes used for the synchronous operation of the API.
 It receives requests and constructs responses that provide back the metric scores
 based on user queries.
 """
+
 import time
 import asyncio
 from typing import List

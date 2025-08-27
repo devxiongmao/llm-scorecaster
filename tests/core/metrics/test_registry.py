@@ -135,8 +135,8 @@ def test_fresh_registry_starts_empty():
     """A fresh MetricRegistry starts with no metrics and no instances."""
     registry = create_fresh_registry()
 
-    assert registry._metrics == {}
-    assert registry._instances == {}
+    assert not registry._metrics
+    assert not registry._instances
     assert registry._discovered is False
 
 
@@ -498,8 +498,8 @@ def test_validate_metrics_with_empty_list():
 
     valid, invalid = registry.validate_metrics([])
 
-    assert valid == []
-    assert invalid == []
+    assert not valid
+    assert not invalid
 
 
 # Cache management tests
@@ -518,7 +518,7 @@ def test_clear_cache():
     # Clear cache
     registry.clear_cache()
 
-    assert registry._instances == {}
+    assert not registry._instances
     # Should still have the registered metric class
     assert "bleu" in registry._metrics
 

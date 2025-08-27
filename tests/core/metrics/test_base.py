@@ -117,7 +117,7 @@ class TestBaseMetric:
         metric = ConcreteMetric()
         results = metric.compute_batch([])
 
-        assert results == []
+        assert not results
 
     def test_compute_batch_single_pair(self):
         """Test batch computation with single pair."""

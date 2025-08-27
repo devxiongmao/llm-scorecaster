@@ -80,9 +80,9 @@ class TestBaseMetric:
         assert result.metric_name == "test_metric"
         assert isinstance(result.score, float)
         assert result.error is None
-        assert result.details is not None
-        assert "reference_length" in result.details
-        assert "candidate_length" in result.details
+
+        assert result.details and result.details.get("reference_length") is not None
+        assert result.details and result.details.get("candidate_length") is not None
 
     def test_metric_result_validation(self):
         """Test that MetricResult validates correctly with Pydantic."""

@@ -598,13 +598,13 @@ def test_different_max_n_values(max_n):
 
         # Check that we have scores for 1 to max_n
         for n in range(1, max_n + 1):
-            assert f"bleu_{n}" in result.details
+            assert result.details.get(f"bleu_{n}") is not None
             assert result.details[f"bleu_{n}"] > 0
 
         # Check that we don't have scores beyond max_n
         for n in range(max_n + 1, 6):
-            if f"bleu_{n}" in result.details:
-                assert result.details[f"bleu_{n}"] == 0.0
+            if result.details.get(f"bleu_{n}") is not None:
+                assert result.details.get(f"bleu_{n}") == 0.0
 
 
 @pytest.mark.parametrize("smooth_method", ["exp", "floor", "add-k", "none"])

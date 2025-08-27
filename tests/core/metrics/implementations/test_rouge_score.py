@@ -704,7 +704,7 @@ def test_different_rouge_type_combinations(rouge_types):
 
         # Check that we have scores for all specified types
         for rouge_type in rouge_types:
-            assert rouge_type in result.details
+            assert result.details.get(rouge_type) is not None
             assert result.details[rouge_type]["f1"] == 0.7246
 
         # Primary score should be ROUGE-L if available, otherwise first

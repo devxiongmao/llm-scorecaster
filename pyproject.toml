@@ -51,7 +51,6 @@ disable = [
   "C0116", # missing-function-docstring
   "C0301", # line-too-long
   "C0415", # import-outside-toplevel
-  "E1135", # unsupported-membership-test
   "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "R0903", # too-few-public-methods

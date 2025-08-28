@@ -1,9 +1,10 @@
 from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.api.auth.dependencies import verify_api_key
+from src.api.auth.dependencies import security
 
 
 @pytest.fixture
@@ -160,8 +161,6 @@ async def test_verify_api_key_long_key(mock_settings, mock_token):
 
 def test_security_dependency_type():
     """Test that the security dependency is properly configured."""
-    from src.api.auth.dependencies import security
-    from fastapi.security import HTTPBearer
 
     assert isinstance(security, HTTPBearer)
 

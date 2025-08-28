@@ -41,7 +41,7 @@ class BertScoreMetric(BaseMetric):
             return
 
         try:
-            from bert_score import BERTScorer
+            from bert_score import BERTScorer # pylint: disable=import-outside-toplevel
 
             # Initialize with default model (roberta-large)
             # You can customize this based on your needs

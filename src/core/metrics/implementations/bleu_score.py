@@ -67,7 +67,7 @@ class BleuMetric(BaseMetric):
             return
 
         try:
-            import sacrebleu
+            import sacrebleu # pylint: disable=import-outside-toplevel
 
             self.sacrebleu = sacrebleu
             self._sacrebleu_loaded = True

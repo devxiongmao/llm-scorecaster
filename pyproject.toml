@@ -49,7 +49,6 @@ disable = [
   "C0114", # missing-module-docstring
   "C0116", # missing-function-docstring
   "C0301", # line-too-long
-  "C0415", # import-outside-toplevel
   "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "R0913", # too-many-arguments

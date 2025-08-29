@@ -54,7 +54,7 @@ class BertScoreMetric(BaseMetric):
         except ImportError as e:
             raise ImportError(
                 "bert-score package is required for BERT Score metric. "
-                "Install with: pip install bert-score"
+                "Install with: poetry install --extras 'bert"
             ) from e
         except Exception as e:
             logger.error("Failed to load BERT Score model: %s", e)

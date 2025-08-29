@@ -11,6 +11,7 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 - **Extensible Architecture**: Easy to add new metrics
 - **Fast & Lightweight**: Built with FastAPI for high performance
 - **Auto-Documentation**: Interactive API docs with Swagger UI
+- **Modular Dependencies**: Install only the metrics you need
 
 ## Architecture
 
@@ -38,11 +39,52 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 
 2. **Install dependencies:**
 
+   The project uses Poetry for dependency management with optional extras. You can install only what you need:
+
    ```bash
-   # Using makefile
+   # Core installation (API server without metric libraries)
+   poetry install
+
+   # Install with specific metrics
+   poetry install --extras "bert"        # BERT Score only
+   poetry install --extras "bleu"        # BLEU Score only  
+   poetry install --extras "rouge"       # ROUGE Score only
+
+   # Install multiple metrics
+   poetry install --extras "bert bleu"   # BERT + BLEU
+   poetry install --extras "bert rouge"  # BERT + ROUGE
+
+   # Install all NLP metrics at once
+   poetry install --extras "nlp-metrics"
+
+   # Install everything including development tools
+   poetry install --extras "all"
+
+   # Development installation
+   poetry install --extras "dev"         # All dev tools
+   poetry install --extras "test"        # Testing tools only
+   poetry install --extras "lint"        # Linting tools only
+   ```
+
+   **Available Installation Options:**
+
+   | Extra | Dependencies | Use Case |
+   |-------|-------------|----------|
+   | `bert` | bert-score | BERT Score metric only |
+   | `bleu` | sacrebleu | BLEU Score metric only |
+   | `rouge` | rouge-score | ROUGE Score metric only |
+   | `nlp-metrics` | All metric libraries | All NLP evaluation metrics |
+   | `test` | pytest, pytest-asyncio, httpx | Testing framework |
+   | `lint` | black, pyright, pylint | Code quality tools |
+   | `dev` | All test + lint tools | Full development setup |
+   | `all` | Everything | Complete installation |
+
+   **Using Make commands:**
+   ```bash
+   # Install everything (equivalent to poetry install --extras "all")
    make init
 
-   # Or to solely install dependancies
+   # Core installation only
    make install
    ```
 
@@ -70,6 +112,42 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
    ```
 
 The API will be available at `http://localhost:8000`
+
+## Installation Notes
+
+### Lightweight Installation
+
+For production environments where you only need specific metrics, use targeted installations:
+
+```bash
+# Minimal BERT-only setup
+poetry install --extras "bert"
+
+# BLEU + ROUGE without BERT (saves ~1GB of model downloads)
+poetry install --extras "bleu rouge"
+```
+
+### Handling Missing Dependencies
+
+If you try to use a metric without installing its dependencies, you'll get a helpful error message:
+
+```json
+{
+  "error": "BERT Score not available. Install with: poetry install --extras 'bert'"
+}
+```
+
+### Development Setup
+
+For contributors and developers:
+
+```bash
+# Full development environment
+poetry install --extras "dev"
+
+# Or install everything
+poetry install --extras "all"
+```
 
 ## Configuration
 
@@ -370,6 +448,22 @@ The registry will automatically discover it on the next discover_metrics() call!
 ## Contributing
 
 We welcome contributions! Please submit a pull request or open an issue if you have suggestions.
+
+### Development Setup
+
+For contributors:
+
+```bash
+# Clone and setup development environment
+git clone https://github.com/devxiongmao/llm-scorecaster.git
+cd llm-scorecaster
+
+# Install with all development dependencies
+poetry install --extras "dev"
+
+# Or install everything
+poetry install --extras "all"
+```
 
 ## License
 

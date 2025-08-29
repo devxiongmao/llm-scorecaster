@@ -76,7 +76,7 @@ class BleuMetric(BaseMetric):
         except ImportError as e:
             raise ImportError(
                 "sacrebleu package is required for BLEU Score metric. "
-                "Install with: poetry add sacrebleu"
+                "Install with: poetry install --extras 'bleu"
             ) from e
         except Exception as e:
             logger.error("Failed to load SacreBLEU: %s", e)

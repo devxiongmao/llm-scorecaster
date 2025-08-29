@@ -54,7 +54,6 @@ disable = [
   "W0212", # protected-access
   "W0231", # super-init-not-called
   "W0621", # redefined-outer-name
-  "W0707", # raise-missing-from
   "W0718", # broad-exception-caught
 ]
 

@@ -92,14 +92,14 @@ class RougeMetric(BaseMetric):
                 "ROUGE scorer loaded successfully with types: %s", self.rouge_types
             )
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "rouge-score package is required for ROUGE metric. "
-                "Install with: pip install rouge-score"
-            )
+                "Install with: poetry add rouge-score"
+            ) from e
         except Exception as e:
             logger.error("Failed to load ROUGE scorer: %s", e)
-            raise RuntimeError(f"Failed to initialize ROUGE scorer: {e}")
+            raise RuntimeError(f"Failed to initialize ROUGE scorer: {e}") from e
 
     def _process_rouge_scores(self, reference: str, candidate: str) -> MetricResult:
         """Process ROUGE scores for a reference and candidate text."""

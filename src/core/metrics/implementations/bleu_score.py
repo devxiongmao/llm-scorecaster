@@ -73,14 +73,14 @@ class BleuMetric(BaseMetric):
             self._sacrebleu_loaded = True
             logger.info("SacreBLEU loaded successfully")
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "sacrebleu package is required for BLEU Score metric. "
                 "Install with: poetry add sacrebleu"
-            )
+            ) from e
         except Exception as e:
             logger.error("Failed to load SacreBLEU: %s", e)
-            raise RuntimeError(f"Failed to initialize BLEU Score: {e}")
+            raise RuntimeError(f"Failed to initialize BLEU Score: {e}") from e
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
         """
@@ -147,7 +147,7 @@ class BleuMetric(BaseMetric):
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
-        self, text_pairs: List[TextPair], _batch_size: int = 32
+        self, text_pairs: List[TextPair], batch_size: int = 32
     ) -> List[MetricResult]:
         """
         Compute BLEU Score for multiple text pairs.

@@ -51,14 +51,14 @@ class BertScoreMetric(BaseMetric):
             self._model_loaded = True
             logger.info("BERT Score model loaded successfully")
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "bert-score package is required for BERT Score metric. "
                 "Install with: pip install bert-score"
-            )
+            ) from e
         except Exception as e:
             logger.error("Failed to load BERT Score model: %s", e)
-            raise RuntimeError(f"Failed to initialize BERT Score: {e}")
+            raise RuntimeError(f"Failed to initialize BERT Score: {e}") from e
 
     def _create_bert_score_result(
         self, precision: float, recall: float, f1: float

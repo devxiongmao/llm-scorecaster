@@ -141,7 +141,9 @@ class MetricRegistry:
                 return instance
             except Exception as e:
                 logger.error("Failed to instantiate metric %s: %s", metric_name, e)
-                raise ValueError(f"Failed to create metric instance: {metric_name}")
+                raise ValueError(
+                    f"Failed to create metric instance: {metric_name}"
+                ) from e
 
         raise ValueError(f"Unknown metric: {metric_name}")
 

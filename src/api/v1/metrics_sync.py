@@ -94,4 +94,4 @@ async def evaluate_metrics_sync(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while processing metrics: {str(e)}",
-        )
+        ) from e

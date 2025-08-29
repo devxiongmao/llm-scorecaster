@@ -433,7 +433,7 @@ def test_compute_batch_multiple_pairs(
     mock_scorer = Mock()
 
     # Mock different return values for each pair
-    def mock_score_side_effect(ref, cand):
+    def mock_score_side_effect(ref, _):
         if "Hello" in ref:
             return {
                 "rouge1": Mock(precision=0.9, recall=0.8, fmeasure=0.8421),
@@ -487,7 +487,7 @@ def test_compute_batch_handles_individual_errors(
     mock_scorer = Mock()
 
     # First pair succeeds, second fails, third succeeds
-    def mock_score_side_effect(ref, cand):
+    def mock_score_side_effect(ref, _):
         if "Hello" in ref:
             return {
                 "rouge1": Mock(precision=0.8, recall=0.75, fmeasure=0.7742),

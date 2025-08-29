@@ -49,7 +49,9 @@ class BaseMetric(ABC):
         """
 
     def compute_batch(
-        self, text_pairs: List[TextPair], batch_size: int = 32
+        self,
+        text_pairs: List[TextPair],
+        batch_size: int = 32,  # pylint: disable=unused-argument
     ) -> List[MetricResult]:
         """
         Compute the metric for multiple text pairs.

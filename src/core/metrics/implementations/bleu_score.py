@@ -147,7 +147,7 @@ class BleuMetric(BaseMetric):
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
-        self, text_pairs: List[TextPair], batch_size: int = 32
+        self, text_pairs: List[TextPair], _batch_size: int = 32
     ) -> List[MetricResult]:
         """
         Compute BLEU Score for multiple text pairs.

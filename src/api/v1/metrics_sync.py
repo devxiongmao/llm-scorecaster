@@ -63,7 +63,7 @@ def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]
 
 @router.post("/evaluate", response_model=MetricsResponse)
 async def evaluate_metrics_sync(
-    request: MetricsRequest, authenticated: bool = Depends(verify_api_key)
+    request: MetricsRequest, _authenticated: bool = Depends(verify_api_key)
 ) -> MetricsResponse:
     """
     Synchronously evaluate metrics for the provided text pairs.

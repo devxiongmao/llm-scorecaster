@@ -169,8 +169,7 @@ def test_ensure_sacrebleu_runtime_error(bleu_metric):
         assert bleu_metric._sacrebleu_loaded is False
 
 
-@patch("sacrebleu.BLEU")
-def test_ensure_sacrebleu_only_loads_once(mock_sacrebleu_class, bleu_metric):
+def test_ensure_sacrebleu_only_loads_once(bleu_metric):
     """_ensure_sacrebleu only loads SacreBLEU once, subsequent calls do nothing."""
 
     assert bleu_metric._sacrebleu_loaded is False

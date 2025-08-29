@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Tuple, Type
-from src.core.metrics.base import BaseMetric
 import importlib
 import pkgutil
 from pathlib import Path
 import logging
+from src.core.metrics.base import BaseMetric
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,35 @@ class MetricRegistry:
         self._instances: Dict[str, BaseMetric] = {}
         self._discovered = False
 
+    def _get_implementations_path(self) -> Path:
+        """Get the implementations directory path."""
+        return Path(__file__).parent / "implementations"
+
+    def _discover_module_metrics(
+        self, module_name: str, implementations_pkg: str
+    ) -> None:
+        """Discover metrics in a single module."""
+        full_module_name = f"{implementations_pkg}.{module_name}"
+
+        try:
+            module = importlib.import_module(full_module_name)
+            self._register_metrics_from_module(module)
+        except Exception as e:
+            logger.error("Failed to import %s: %s", full_module_name, e)
+
+    def _register_metrics_from_module(self, module) -> None:
+        """Register all BaseMetric subclasses found in a module."""
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, BaseMetric)
+                and attr is not BaseMetric
+            ):
+                self._register_metric_class(attr)
+                logger.info("Discovered metric: %s", attr.__name__)
+
     def discover_metrics(self, force_reload: bool = False) -> None:
         """
         Automatically discover all metric implementations.
@@ -37,12 +66,11 @@ class MetricRegistry:
         logger.info("Discovering metric implementations...")
 
         try:
-            # Get the implementations package path
-            implementations_path = Path(__file__).parent / "implementations"
+            implementations_path = self._get_implementations_path()
 
             if not implementations_path.exists():
                 logger.warning(
-                    f"Implementations directory not found: {implementations_path}"
+                    "Implementations directory not found: %s", implementations_path
                 )
                 self._discovered = True  # Mark as discovered even if directory missing
                 return
@@ -51,37 +79,17 @@ class MetricRegistry:
             implementations_pkg = "src.core.metrics.implementations"
 
             # Iterate through all modules in the implementations package
-            for finder, module_name, ispkg in pkgutil.iter_modules(
+            for _, module_name, ispkg in pkgutil.iter_modules(
                 [str(implementations_path)]
             ):
                 if not ispkg:  # Skip packages, only import modules
-                    full_module_name = f"{implementations_pkg}.{module_name}"
-
-                    try:
-                        module = importlib.import_module(full_module_name)
-
-                        # Find all classes in the module that inherit from BaseMetric
-                        for attr_name in dir(module):
-                            attr = getattr(module, attr_name)
-
-                            if (
-                                isinstance(attr, type)
-                                and issubclass(attr, BaseMetric)
-                                and attr is not BaseMetric
-                            ):
-                                # Register the metric class
-                                self._register_metric_class(attr)
-                                logger.info(f"Discovered metric: {attr.__name__}")
-
-                    except Exception as e:
-                        logger.error(f"Failed to import {full_module_name}: {e}")
-                        continue
+                    self._discover_module_metrics(module_name, implementations_pkg)
 
             self._discovered = True
-            logger.info(f"Discovery complete. Found {len(self._metrics)} metrics.")
+            logger.info("Discovery complete. Found %d metrics.", len(self._metrics))
 
         except Exception as e:
-            logger.error(f"Error during metric discovery: {e}")
+            logger.error("Error during metric discovery: %s", e)
             raise
 
     def _register_metric_class(self, metric_class: Type[BaseMetric]) -> None:
@@ -93,7 +101,7 @@ class MetricRegistry:
             self._metrics[metric_name] = metric_class
         except Exception as e:
             logger.error(
-                f"Failed to register metric class {metric_class.__name__}: {e}"
+                "Failed to register metric class %s: %s", metric_class.__name__, e
             )
 
     def register_metric(self, metric_class: Type[BaseMetric]) -> None:
@@ -132,8 +140,10 @@ class MetricRegistry:
                 self._instances[metric_name] = instance
                 return instance
             except Exception as e:
-                logger.error(f"Failed to instantiate metric {metric_name}: {e}")
-                raise ValueError(f"Failed to create metric instance: {metric_name}")
+                logger.error("Failed to instantiate metric %s: %s", metric_name, e)
+                raise ValueError(
+                    f"Failed to create metric instance: {metric_name}"
+                ) from e
 
         raise ValueError(f"Unknown metric: {metric_name}")
 

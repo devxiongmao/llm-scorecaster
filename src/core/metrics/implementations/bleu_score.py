@@ -1,9 +1,27 @@
+from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
+import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
-import logging
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BleuConfig:
+    """Configuration for BLEU metric.
+    max_n: Maximum n-gram order to consider (default: 4 for BLEU-4)
+    smooth_method: Smoothing method ('exp', 'floor', 'add-k', 'none')
+    smooth_value: Smoothing value for add-k method
+    tokenize: Tokenization method ('13a', 'intl', 'zh', 'ja-mecab', 'none')
+    lowercase: Whether to lowercase the input
+    """
+
+    max_n: int = 4
+    smooth_method: str = "exp"
+    smooth_value: float = 0.0
+    tokenize: str = "13a"
+    lowercase: bool = False
 
 
 class BleuMetric(BaseMetric):
@@ -15,31 +33,17 @@ class BleuMetric(BaseMetric):
     Uses SacreBLEU for standardized, reproducible BLEU computation.
     """
 
-    def __init__(
-        self,
-        max_n: int = 4,
-        smooth_method: str = "exp",
-        smooth_value: float = 0.0,
-        tokenize: str = "13a",
-        lowercase: bool = False,
-    ):
+    def __init__(self, config: Optional[BleuConfig] = None):
         """
         Initialize BLEU metric with SacreBLEU.
 
         Args:
-            max_n: Maximum n-gram order to consider (default: 4 for BLEU-4)
-            smooth_method: Smoothing method ('exp', 'floor', 'add-k', 'none')
-            smooth_value: Smoothing value for add-k method
-            tokenize: Tokenization method ('13a', 'intl', 'zh', 'ja-mecab', 'none')
-            lowercase: Whether to lowercase the input
+            config: BLEU configuration object
         """
         super().__init__()
-        self.max_n = max_n
-        self.smooth_method = smooth_method
-        self.smooth_value = smooth_value
-        self.tokenize = tokenize
-        self.lowercase = lowercase
+        self.config = config or BleuConfig()
         self._sacrebleu_loaded = False
+        self.sacrebleu = None
 
     @property
     def name(self) -> str:
@@ -51,9 +55,7 @@ class BleuMetric(BaseMetric):
 
     @property
     def description(self) -> str:
-        return (
-            f"BLEU Score: N-gram based evaluation (BLEU-{self.max_n}) using SacreBLEU"
-        )
+        return f"BLEU Score: N-gram based evaluation (BLEU-{self.config.max_n}) using SacreBLEU"
 
     @property
     def requires_model_download(self) -> bool:
@@ -65,19 +67,20 @@ class BleuMetric(BaseMetric):
             return
 
         try:
-            import sacrebleu
+            import sacrebleu  # pylint: disable=import-outside-toplevel
 
+            self.sacrebleu = sacrebleu
             self._sacrebleu_loaded = True
             logger.info("SacreBLEU loaded successfully")
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "sacrebleu package is required for BLEU Score metric. "
                 "Install with: poetry add sacrebleu"
-            )
+            ) from e
         except Exception as e:
-            logger.error(f"Failed to load SacreBLEU: {e}")
-            raise RuntimeError(f"Failed to initialize BLEU Score: {e}")
+            logger.error("Failed to load SacreBLEU: %s", e)
+            raise RuntimeError(f"Failed to initialize BLEU Score: {e}") from e
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
         """
@@ -93,15 +96,13 @@ class BleuMetric(BaseMetric):
         self._ensure_sacrebleu()
 
         try:
-            import sacrebleu
-
-            # Create BLEU object with configuration
-            bleu = sacrebleu.BLEU(
-                max_ngram_order=self.max_n,
-                smooth_method=self.smooth_method,
-                smooth_value=self.smooth_value,
-                tokenize=self.tokenize,
-                lowercase=self.lowercase,
+            assert self.sacrebleu is not None
+            bleu = self.sacrebleu.BLEU(
+                max_ngram_order=self.config.max_n,
+                smooth_method=self.config.smooth_method,
+                smooth_value=self.config.smooth_value,
+                tokenize=self.config.tokenize,
+                lowercase=self.config.lowercase,
             )
 
             # Compute BLEU score
@@ -110,7 +111,7 @@ class BleuMetric(BaseMetric):
 
             # Extract individual n-gram precisions
             individual_scores = {}
-            for n in range(1, self.max_n + 1):
+            for n in range(1, self.config.max_n + 1):
                 if n <= len(bleu_score.precisions):
                     individual_scores[f"bleu_{n}"] = round(
                         bleu_score.precisions[n - 1], 4
@@ -128,7 +129,7 @@ class BleuMetric(BaseMetric):
                     "bleu_score_100": round(
                         bleu_score.score, 2
                     ),  # Keep original 0-100 scale too
-                    "max_n": self.max_n,
+                    "max_n": self.config.max_n,
                     **individual_scores,
                     "brevity_penalty": round(bleu_score.bp, 4),
                     "length_ratio": round(
@@ -136,13 +137,13 @@ class BleuMetric(BaseMetric):
                     ),
                     "reference_length": bleu_score.ref_len,
                     "candidate_length": bleu_score.sys_len,
-                    "tokenization": self.tokenize,
-                    "smoothing": self.smooth_method,
+                    "tokenization": self.config.tokenize,
+                    "smoothing": self.config.smooth_method,
                 },
             )
 
         except Exception as e:
-            logger.error(f"Error computing BLEU Score: {e}")
+            logger.error("Error computing BLEU Score: %s", e)
             return MetricResult(metric_name=self.name, score=0.0, error=str(e))
 
     def compute_batch(
@@ -170,15 +171,13 @@ class BleuMetric(BaseMetric):
         self._notify_start(len(text_pairs))
 
         try:
-            import sacrebleu
-
-            # Create BLEU object once for efficiency
-            bleu = sacrebleu.BLEU(
-                max_ngram_order=self.max_n,
-                smooth_method=self.smooth_method,
-                smooth_value=self.smooth_value,
-                tokenize=self.tokenize,
-                lowercase=self.lowercase,
+            assert self.sacrebleu is not None
+            bleu = self.sacrebleu.BLEU(
+                max_ngram_order=self.config.max_n,
+                smooth_method=self.config.smooth_method,
+                smooth_value=self.config.smooth_value,
+                tokenize=self.config.tokenize,
+                lowercase=self.config.lowercase,
             )
 
             for i, pair in enumerate(text_pairs):
@@ -188,7 +187,7 @@ class BleuMetric(BaseMetric):
 
                     # Extract individual n-gram precisions
                     individual_scores = {}
-                    for n in range(1, self.max_n + 1):
+                    for n in range(1, self.config.max_n + 1):
                         if n <= len(bleu_score.precisions):
                             individual_scores[f"bleu_{n}"] = round(
                                 bleu_score.precisions[n - 1], 4
@@ -202,7 +201,7 @@ class BleuMetric(BaseMetric):
                         details={
                             "bleu_score": round(bleu_score.score / 100.0, 4),
                             "bleu_score_100": round(bleu_score.score, 2),
-                            "max_n": self.max_n,
+                            "max_n": self.config.max_n,
                             **individual_scores,
                             "brevity_penalty": round(bleu_score.bp, 4),
                             "length_ratio": round(
@@ -210,15 +209,15 @@ class BleuMetric(BaseMetric):
                             ),
                             "reference_length": bleu_score.ref_len,
                             "candidate_length": bleu_score.sys_len,
-                            "tokenization": self.tokenize,
-                            "smoothing": self.smooth_method,
+                            "tokenization": self.config.tokenize,
+                            "smoothing": self.config.smooth_method,
                         },
                     )
                     results.append(result)
                     self._notify_pair_processed(i, result)
 
                 except Exception as e:
-                    logger.error(f"Error processing pair {i}: {e}")
+                    logger.error("Error processing pair %d: %s", i, e)
                     error_result = MetricResult(
                         metric_name=self.name, score=0.0, error=str(e)
                     )
@@ -237,22 +236,15 @@ class BleuMetric(BaseMetric):
         return {
             "status": "loaded" if self._sacrebleu_loaded else "not_loaded",
             "library": "sacrebleu",
-            "max_n": self.max_n,
-            "smooth_method": self.smooth_method,
-            "smooth_value": self.smooth_value,
-            "tokenize": self.tokenize,
-            "lowercase": self.lowercase,
+            "max_n": self.config.max_n,
+            "smooth_method": self.config.smooth_method,
+            "smooth_value": self.config.smooth_value,
+            "tokenize": self.config.tokenize,
+            "lowercase": self.config.lowercase,
             "requires_download": False,
         }
 
-    def configure(
-        self,
-        max_n: Optional[int] = None,
-        smooth_method: Optional[str] = None,
-        smooth_value: Optional[float] = None,
-        tokenize: Optional[str] = None,
-        lowercase: Optional[bool] = None,
-    ) -> None:
+    def configure(self, config: Optional[BleuConfig] = None):
         """
         Update BLEU configuration. Will take effect on next computation.
         Allows you to update the settings at runtime without recreating the metric.
@@ -264,18 +256,23 @@ class BleuMetric(BaseMetric):
             tokenize: Tokenization method ('13a', 'intl', 'zh', 'ja-mecab', 'none')
             lowercase: Whether to lowercase the input
         """
-        if max_n is not None:
-            self.max_n = max_n
-        if smooth_method is not None:
-            self.smooth_method = smooth_method
-        if smooth_value is not None:
-            self.smooth_value = smooth_value
-        if tokenize is not None:
-            self.tokenize = tokenize
-        if lowercase is not None:
-            self.lowercase = lowercase
+        if config is None:
+            return
+
+        if config.max_n is not None:
+            self.config.max_n = config.max_n
+        if config.smooth_method is not None:
+            self.config.smooth_method = config.smooth_method
+        if config.smooth_value is not None:
+            self.config.smooth_value = config.smooth_value
+        if config.tokenize is not None:
+            self.config.tokenize = config.tokenize
+        if config.lowercase is not None:
+            self.config.lowercase = config.lowercase
 
         logger.info(
-            f"BLEU configuration updated: max_n={self.max_n}, "
-            f"tokenize={self.tokenize}, smooth_method={self.smooth_method}"
+            "BLEU configuration updated: max_n=%s, tokenize=%s, smooth_method=%s",
+            self.config.max_n,
+            self.config.tokenize,
+            self.config.smooth_method,
         )

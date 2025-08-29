@@ -102,6 +102,13 @@ def test_endpoints_return_json(client: TestClient):
 
 
 class ValidationRequest(BaseModel):
+    """
+    Simple Validation Request Model to confirm correct operation of FastAPI.
+
+    This class a standard inferface for us to confirm we're never overwritting or changing any
+    core functionality of FastAPI that would otherwise cause this software not work.
+    """
+
     name: str
     age: int
 

@@ -79,7 +79,9 @@ class RougeMetric(BaseMetric):
             return
 
         try:
-            from rouge_score import rouge_scorer # pylint: disable=import-outside-toplevel
+            from rouge_score import (  # pylint: disable=import-outside-toplevel
+                rouge_scorer,
+            )
 
             # Initialize ROUGE scorer with specified types and stemmer option
             self._scorer = rouge_scorer.RougeScorer(

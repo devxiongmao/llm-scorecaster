@@ -1,3 +1,10 @@
+"""
+Authentication dependencies for FastAPI.
+
+This module provides authentication utilities for verifying API keys
+in FastAPI applications using bearer token authentication.
+"""
+
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.core.settings import settings

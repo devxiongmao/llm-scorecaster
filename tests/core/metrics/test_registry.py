@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import Mock, patch
 from typing import Any
+
+import pytest
 from src.core.metrics.registry import MetricRegistry, metric_registry
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType
@@ -134,8 +135,8 @@ def test_fresh_registry_starts_empty():
     """A fresh MetricRegistry starts with no metrics and no instances."""
     registry = create_fresh_registry()
 
-    assert registry._metrics == {}
-    assert registry._instances == {}
+    assert not registry._metrics
+    assert not registry._instances
     assert registry._discovered is False
 
 
@@ -497,8 +498,8 @@ def test_validate_metrics_with_empty_list():
 
     valid, invalid = registry.validate_metrics([])
 
-    assert valid == []
-    assert invalid == []
+    assert not valid
+    assert not invalid
 
 
 # Cache management tests
@@ -511,13 +512,13 @@ def test_clear_cache():
     registry._discovered = True
 
     # Create cached instance
-    instance = registry.get_metric("bleu")
+    registry.get_metric("bleu")
     assert "bleu" in registry._instances
 
     # Clear cache
     registry.clear_cache()
 
-    assert registry._instances == {}
+    assert not registry._instances
     # Should still have the registered metric class
     assert "bleu" in registry._metrics
 
@@ -580,10 +581,9 @@ def test_discover_metrics_handles_packages_in_implementations():
     def import_side_effect(module_name):
         if "metric_module" in module_name:
             return mock_metric_module
-        elif "another_module" in module_name:
+        if "another_module" in module_name:
             return mock_another_module
-        else:
-            raise ImportError("Should not import packages")
+        raise ImportError("Should not import packages")
 
     with (
         patch("pathlib.Path.exists", return_value=True),

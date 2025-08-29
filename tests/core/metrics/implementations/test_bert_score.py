@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import Mock, patch
+import pytest
 
 from src.core.metrics.implementations.bert_score import BertScoreMetric
 from src.models.schemas import MetricType, MetricResult, TextPair

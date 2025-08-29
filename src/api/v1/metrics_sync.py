@@ -1,3 +1,15 @@
+"""
+Version 1 of the synchronous API for the LLM-scorecaster.
+
+This module provides the routes used for the synchronous operation of the API.
+It receives requests and constructs responses that provide back the metric scores
+based on user queries.
+"""
+
+import time
+import asyncio
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.models.schemas import (
     MetricsRequest,
@@ -7,9 +19,6 @@ from src.models.schemas import (
 from src.api.auth.dependencies import verify_api_key
 from src.core.metrics.registry import metric_registry
 from src.models.schemas import TextPair
-import time
-import asyncio
-from typing import List
 
 router = APIRouter()
 
@@ -33,7 +42,7 @@ def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]
         pair_results = []
 
         # Compute each requested metric for this text pair
-        for metric_name, metric_instance in metrics.items():
+        for _, metric_instance in metrics.items():
             result = metric_instance.compute_single(
                 text_pair.reference, text_pair.candidate
             )
@@ -54,7 +63,7 @@ def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]
 
 @router.post("/evaluate", response_model=MetricsResponse)
 async def evaluate_metrics_sync(
-    request: MetricsRequest, authenticated: bool = Depends(verify_api_key)
+    request: MetricsRequest, _authenticated: bool = Depends(verify_api_key)
 ) -> MetricsResponse:
     """
     Synchronously evaluate metrics for the provided text pairs.
@@ -85,4 +94,4 @@ async def evaluate_metrics_sync(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while processing metrics: {str(e)}",
-        )
+        ) from e

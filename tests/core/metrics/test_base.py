@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import Mock
+import pytest
 
 from src.core.metrics.base import BaseMetric
 from src.core.metrics.metric_observer import MetricObserver
@@ -55,7 +55,7 @@ class TestBaseMetric:
     def test_cannot_instantiate_abstract_class(self):
         """Test that BaseMetric cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            BaseMetric()  # type: ignore[abstract]
+            BaseMetric()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
     def test_concrete_implementation_properties(self):
         """Test that concrete implementations work correctly."""
@@ -80,9 +80,9 @@ class TestBaseMetric:
         assert result.metric_name == "test_metric"
         assert isinstance(result.score, float)
         assert result.error is None
-        assert result.details is not None
-        assert "reference_length" in result.details
-        assert "candidate_length" in result.details
+
+        assert result.details and result.details.get("reference_length") is not None
+        assert result.details and result.details.get("candidate_length") is not None
 
     def test_metric_result_validation(self):
         """Test that MetricResult validates correctly with Pydantic."""
@@ -117,7 +117,7 @@ class TestBaseMetric:
         metric = ConcreteMetric()
         results = metric.compute_batch([])
 
-        assert results == []
+        assert not results
 
     def test_compute_batch_single_pair(self):
         """Test batch computation with single pair."""
@@ -278,6 +278,12 @@ class TestMetricSubclassRequirements:
         with pytest.raises(TypeError):
 
             class IncompleteMetric1(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the name property.
+                """
+
                 @property
                 def metric_type(self) -> MetricType:
                     return MetricType.BERT_SCORE
@@ -287,13 +293,19 @@ class TestMetricSubclassRequirements:
                 ) -> MetricResult:
                     return MetricResult(metric_name="test", score=0.0)
 
-            IncompleteMetric1()  # type: ignore[abstract]
+            IncompleteMetric1()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
     def test_missing_metric_type_property(self):
         """Test that subclass must implement metric_type property."""
         with pytest.raises(TypeError):
 
             class IncompleteMetric2(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the metric_type property.
+                """
+
                 @property
                 def name(self) -> str:
                     return "test"
@@ -303,13 +315,19 @@ class TestMetricSubclassRequirements:
                 ) -> MetricResult:
                     return MetricResult(metric_name="test", score=0.0)
 
-            IncompleteMetric2()  # type: ignore[abstract]
+            IncompleteMetric2()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
     def test_missing_compute_single_method(self):
         """Test that subclass must implement compute_single method."""
         with pytest.raises(TypeError):
 
             class IncompleteMetric3(BaseMetric):
+                """
+                An incomplete metric model used for testing.
+
+                This class does not include the compute_single method.
+                """
+
                 @property
                 def name(self) -> str:
                     return "test"
@@ -318,7 +336,7 @@ class TestMetricSubclassRequirements:
                 def metric_type(self) -> MetricType:
                     return MetricType.BERT_SCORE
 
-            IncompleteMetric3()  # type: ignore[abstract]
+            IncompleteMetric3()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 class TestMetricTypes:

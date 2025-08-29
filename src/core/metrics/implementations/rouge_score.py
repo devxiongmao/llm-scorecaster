@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Set, Optional
+import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,9 @@ class RougeMetric(BaseMetric):
             return
 
         try:
-            from rouge_score import rouge_scorer
+            from rouge_score import (  # pylint: disable=import-outside-toplevel
+                rouge_scorer,
+            )
 
             # Initialize ROUGE scorer with specified types and stemmer option
             self._scorer = rouge_scorer.RougeScorer(
@@ -87,17 +89,67 @@ class RougeMetric(BaseMetric):
             )
             self._rouge_score_loaded = True
             logger.info(
-                f"ROUGE scorer loaded successfully with types: {self.rouge_types}"
+                "ROUGE scorer loaded successfully with types: %s", self.rouge_types
             )
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "rouge-score package is required for ROUGE metric. "
-                "Install with: pip install rouge-score"
-            )
+                "Install with: poetry add rouge-score"
+            ) from e
         except Exception as e:
-            logger.error(f"Failed to load ROUGE scorer: {e}")
-            raise RuntimeError(f"Failed to initialize ROUGE scorer: {e}")
+            logger.error("Failed to load ROUGE scorer: %s", e)
+            raise RuntimeError(f"Failed to initialize ROUGE scorer: {e}") from e
+
+    def _process_rouge_scores(self, reference: str, candidate: str) -> MetricResult:
+        """Process ROUGE scores for a reference and candidate text."""
+        assert self._scorer is not None
+
+        scores = self._scorer.score(reference, candidate)
+
+        # Extract detailed scores
+        details = {}
+        primary_f1_score = 0.0
+
+        for rouge_type in self.rouge_types:
+            if rouge_type in scores:
+                rouge_score = scores[rouge_type]
+
+                # Round scores for consistency
+                precision = round(rouge_score.precision, 4)
+                recall = round(rouge_score.recall, 4)
+                f1 = round(rouge_score.fmeasure, 4)
+
+                details[rouge_type] = {
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                }
+
+                # Use ROUGE-L F1 as primary score, fallback to first available F1
+                if rouge_type == "rougeL":
+                    primary_f1_score = f1
+                elif primary_f1_score == 0.0:
+                    primary_f1_score = f1
+
+        # Add configuration info to details
+        details.update(
+            {
+                "rouge_types": self.rouge_types,
+                "use_stemmer": self.use_stemmer,
+                "library": "rouge-score",
+            }
+        )
+
+        return MetricResult(
+            metric_name=self.name,
+            score=primary_f1_score,
+            details=details,
+        )
+
+    def _process_rouge_pair(self, pair: TextPair) -> MetricResult:
+        """Process a single text pair and return ROUGE result."""
+        return self._process_rouge_scores(pair.reference, pair.candidate)
 
     def compute_single(self, reference: str, candidate: str) -> MetricResult:
         """
@@ -111,59 +163,17 @@ class RougeMetric(BaseMetric):
             MetricResult: ROUGE result with scores for all configured variants
         """
         self._ensure_rouge_score()
-
-        # Type assertion since _ensure_rouge_score ensures _scorer is not None
         assert self._scorer is not None
 
         try:
-            # Compute ROUGE scores
-            scores = self._scorer.score(reference, candidate)
-
-            # Extract detailed scores
-            details = {}
-            primary_f1_score = 0.0
-
-            for rouge_type in self.rouge_types:
-                if rouge_type in scores:
-                    rouge_score = scores[rouge_type]
-
-                    # Round scores for consistency
-                    precision = round(rouge_score.precision, 4)
-                    recall = round(rouge_score.recall, 4)
-                    f1 = round(rouge_score.fmeasure, 4)
-
-                    details[rouge_type] = {
-                        "precision": precision,
-                        "recall": recall,
-                        "f1": f1,
-                    }
-
-                    # Use ROUGE-L F1 as primary score, fallback to first available F1
-                    if rouge_type == "rougeL":
-                        primary_f1_score = f1
-                    elif (
-                        primary_f1_score == 0.0
-                    ):  # Use first available if ROUGE-L not present
-                        primary_f1_score = f1
-
-            # Add configuration info to details
-            details.update(
-                {
-                    "rouge_types": self.rouge_types,
-                    "use_stemmer": self.use_stemmer,
-                    "library": "rouge-score",
-                }
-            )
-
-            return MetricResult(
-                metric_name=self.name,
-                score=primary_f1_score,
-                details=details,
-            )
-
+            return self._process_rouge_scores(reference, candidate)
         except Exception as e:
-            logger.error(f"Error computing ROUGE scores: {e}")
-            return MetricResult(metric_name=self.name, score=0.0, error=str(e))
+            logger.error("Error computing ROUGE scores: %s", e)
+            return self._create_error_result(e)
+
+    def _create_error_result(self, error: Exception) -> MetricResult:
+        """Create a MetricResult for errors."""
+        return MetricResult(metric_name=self.name, score=0.0, error=str(error))
 
     def compute_batch(
         self, text_pairs: List[TextPair], batch_size: int = 32
@@ -183,8 +193,6 @@ class RougeMetric(BaseMetric):
             List[MetricResult]: List of ROUGE results
         """
         self._ensure_rouge_score()
-
-        # Type assertion since _ensure_rouge_score ensures _scorer is not None
         assert self._scorer is not None
 
         if not text_pairs:
@@ -202,70 +210,25 @@ class RougeMetric(BaseMetric):
                     # Process each pair in the batch
                     for j, pair in enumerate(batch):
                         try:
-                            # Compute ROUGE scores for this pair
-                            scores = self._scorer.score(pair.reference, pair.candidate)
-
-                            # Extract detailed scores
-                            details = {}
-                            primary_f1_score = 0.0
-
-                            for rouge_type in self.rouge_types:
-                                if rouge_type in scores:
-                                    rouge_score = scores[rouge_type]
-
-                                    # Round scores for consistency
-                                    precision = round(rouge_score.precision, 4)
-                                    recall = round(rouge_score.recall, 4)
-                                    f1 = round(rouge_score.fmeasure, 4)
-
-                                    details[rouge_type] = {
-                                        "precision": precision,
-                                        "recall": recall,
-                                        "f1": f1,
-                                    }
-
-                                    # Use ROUGE-L F1 as primary score, fallback to first available F1
-                                    if rouge_type == "rougeL":
-                                        primary_f1_score = f1
-                                    elif primary_f1_score == 0.0:
-                                        primary_f1_score = f1
-
-                            # Add configuration info to details
-                            details.update(
-                                {
-                                    "rouge_types": self.rouge_types,
-                                    "use_stemmer": self.use_stemmer,
-                                    "library": "rouge-score",
-                                }
-                            )
-
-                            result = MetricResult(
-                                metric_name=self.name,
-                                score=primary_f1_score,
-                                details=details,
-                            )
+                            result = self._process_rouge_pair(pair)
                             results.append(result)
-
-                            # Notify observers
                             self._notify_pair_processed(i + j, result)
 
                         except Exception as e:
-                            logger.error(f"Error processing pair {i + j}: {e}")
-                            error_result = MetricResult(
-                                metric_name=self.name, score=0.0, error=str(e)
-                            )
+                            logger.error("Error processing pair %d: %s", i + j, e)
+                            error_result = self._create_error_result(e)
                             results.append(error_result)
                             self._notify_pair_processed(i + j, error_result)
 
                 except Exception as e:
-                    logger.error(f"Error processing batch {i // batch_size + 1}: {e}")
+                    logger.error(
+                        "Error processing batch %d: %s", i // batch_size + 1, e
+                    )
 
                     # Create error results for any remaining pairs in the batch
                     for j, pair in enumerate(batch):
                         if i + j >= len(results):  # Only add if not already processed
-                            error_result = MetricResult(
-                                metric_name=self.name, score=0.0, error=str(e)
-                            )
+                            error_result = self._create_error_result(e)
                             results.append(error_result)
                             self._notify_pair_processed(i + j, error_result)
 
@@ -318,8 +281,9 @@ class RougeMetric(BaseMetric):
             self._rouge_score_loaded = False
             self._scorer = None
             logger.info(
-                f"ROUGE configuration updated: rouge_types={self.rouge_types}, "
-                f"use_stemmer={self.use_stemmer}"
+                "ROUGE configuration updated: rouge_types=%s, use_stemmer=%s",
+                self.rouge_types,
+                self.use_stemmer,
             )
 
     def get_supported_rouge_types(self) -> Set[str]:

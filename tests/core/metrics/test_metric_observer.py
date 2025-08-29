@@ -1,6 +1,5 @@
-import pytest
 from typing import List
-
+import pytest
 from src.core.metrics.metric_observer import MetricObserver
 from src.models.schemas import MetricResult
 
@@ -84,7 +83,7 @@ def test_error():
 def test_cannot_instantiate_abstract_class():
     """MetricObserver cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        MetricObserver()  # type: ignore[abstract]
+        MetricObserver()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_concrete_implementation_works(observer):
@@ -215,6 +214,12 @@ def test_missing_on_metric_start():
     with pytest.raises(TypeError):
 
         class IncompleteObserver1(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_start method.
+            """
+
             def on_pair_processed(
                 self, metric_name: str, pair_index: int, result: MetricResult
             ) -> None:
@@ -228,7 +233,7 @@ def test_missing_on_metric_start():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver1()  # type: ignore[abstract]
+        IncompleteObserver1()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_pair_processed():
@@ -236,6 +241,12 @@ def test_missing_on_pair_processed():
     with pytest.raises(TypeError):
 
         class IncompleteObserver2(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_pair_processed method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 
@@ -247,7 +258,7 @@ def test_missing_on_pair_processed():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver2()  # type: ignore[abstract]
+        IncompleteObserver2()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_metric_complete():
@@ -255,6 +266,12 @@ def test_missing_on_metric_complete():
     with pytest.raises(TypeError):
 
         class IncompleteObserver3(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_complete method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 
@@ -266,7 +283,7 @@ def test_missing_on_metric_complete():
             def on_metric_error(self, metric_name: str, error: Exception) -> None:
                 pass
 
-        IncompleteObserver3()  # type: ignore[abstract]
+        IncompleteObserver3()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_missing_on_metric_error():
@@ -274,6 +291,12 @@ def test_missing_on_metric_error():
     with pytest.raises(TypeError):
 
         class IncompleteObserver4(MetricObserver):
+            """
+            An incomplete observer model used for testing.
+
+            This class does not include the on_metric_error method.
+            """
+
             def on_metric_start(self, metric_name: str, total_pairs: int) -> None:
                 pass
 
@@ -287,7 +310,7 @@ def test_missing_on_metric_error():
             ) -> None:
                 pass
 
-        IncompleteObserver4()  # type: ignore[abstract]
+        IncompleteObserver4()  # type: ignore[abstract] # pylint: disable=abstract-class-instantiated
 
 
 def test_observer_state_isolation():

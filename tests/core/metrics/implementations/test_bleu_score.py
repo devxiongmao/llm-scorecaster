@@ -1,7 +1,7 @@
-import pytest
 from unittest.mock import Mock, patch
+import pytest
 
-from src.core.metrics.implementations.bleu_score import BleuMetric
+from src.core.metrics.implementations.bleu_score import BleuMetric, BleuConfig
 from src.models.schemas import MetricType, MetricResult, TextPair
 
 
@@ -16,11 +16,13 @@ def bleu_metric():
 def custom_bleu_metric():
     """BLEU Score metric with custom configuration."""
     return BleuMetric(
-        max_n=2,
-        smooth_method="add-k",
-        smooth_value=1.0,
-        tokenize="intl",
-        lowercase=True,
+        config=BleuConfig(
+            max_n=2,
+            smooth_method="add-k",
+            smooth_value=1.0,
+            tokenize="intl",
+            lowercase=True,
+        )
     )
 
 
@@ -84,16 +86,16 @@ def test_custom_metric_properties(custom_bleu_metric):
     """Custom BLEU Score metric has correct properties."""
     assert custom_bleu_metric.name == "bleu_score"
     assert "BLEU-2" in custom_bleu_metric.description
-    assert custom_bleu_metric.max_n == 2
+    assert custom_bleu_metric.config.max_n == 2
 
 
 def test_initial_state(bleu_metric):
     """BLEU Score metric starts in unloaded state."""
     assert bleu_metric._sacrebleu_loaded is False
-    assert bleu_metric.max_n == 4
-    assert bleu_metric.smooth_method == "exp"
-    assert bleu_metric.tokenize == "13a"
-    assert bleu_metric.lowercase is False
+    assert bleu_metric.config.max_n == 4
+    assert bleu_metric.config.smooth_method == "exp"
+    assert bleu_metric.config.tokenize == "13a"
+    assert bleu_metric.config.lowercase is False
 
 
 def test_get_model_info_not_loaded(bleu_metric):
@@ -167,8 +169,7 @@ def test_ensure_sacrebleu_runtime_error(bleu_metric):
         assert bleu_metric._sacrebleu_loaded is False
 
 
-@patch("sacrebleu.BLEU")
-def test_ensure_sacrebleu_only_loads_once(mock_sacrebleu_class, bleu_metric):
+def test_ensure_sacrebleu_only_loads_once(bleu_metric):
     """_ensure_sacrebleu only loads SacreBLEU once, subsequent calls do nothing."""
 
     assert bleu_metric._sacrebleu_loaded is False
@@ -427,52 +428,54 @@ def test_compute_batch_loads_sacrebleu_if_needed(
 def test_configure_method(bleu_metric):
     """configure method updates settings correctly."""
     bleu_metric.configure(
-        max_n=3,
-        smooth_method="floor",
-        smooth_value=0.5,
-        tokenize="intl",
-        lowercase=True,
+        config=BleuConfig(
+            max_n=3,
+            smooth_method="floor",
+            smooth_value=0.5,
+            tokenize="intl",
+            lowercase=True,
+        )
     )
 
-    assert bleu_metric.max_n == 3
-    assert bleu_metric.smooth_method == "floor"
-    assert bleu_metric.smooth_value == 0.5
-    assert bleu_metric.tokenize == "intl"
-    assert bleu_metric.lowercase is True
+    assert bleu_metric.config.max_n == 3
+    assert bleu_metric.config.smooth_method == "floor"
+    assert bleu_metric.config.smooth_value == 0.5
+    assert bleu_metric.config.tokenize == "intl"
+    assert bleu_metric.config.lowercase is True
 
 
 def test_configure_partial_update(bleu_metric):
     """configure method allows partial updates."""
-    original_smooth = bleu_metric.smooth_method
-    original_tokenize = bleu_metric.tokenize
+    original_smooth = bleu_metric.config.smooth_method
+    original_tokenize = bleu_metric.config.tokenize
 
-    bleu_metric.configure(max_n=2, lowercase=True)
+    bleu_metric.configure(config=BleuConfig(max_n=2, lowercase=True))
 
-    assert bleu_metric.max_n == 2
-    assert bleu_metric.lowercase is True
+    assert bleu_metric.config.max_n == 2
+    assert bleu_metric.config.lowercase is True
     # Other settings unchanged
-    assert bleu_metric.smooth_method == original_smooth
-    assert bleu_metric.tokenize == original_tokenize
+    assert bleu_metric.config.smooth_method == original_smooth
+    assert bleu_metric.config.tokenize == original_tokenize
 
 
 def test_configure_none_values(bleu_metric):
     """configure method ignores None values."""
     original_config = {
-        "max_n": bleu_metric.max_n,
-        "smooth_method": bleu_metric.smooth_method,
-        "smooth_value": bleu_metric.smooth_value,
-        "tokenize": bleu_metric.tokenize,
-        "lowercase": bleu_metric.lowercase,
+        "max_n": bleu_metric.config.max_n,
+        "smooth_method": bleu_metric.config.smooth_method,
+        "smooth_value": bleu_metric.config.smooth_value,
+        "tokenize": bleu_metric.config.tokenize,
+        "lowercase": bleu_metric.config.lowercase,
     }
 
-    bleu_metric.configure(max_n=None, smooth_method=None)
+    bleu_metric.configure()
 
     # All settings should remain unchanged
-    assert bleu_metric.max_n == original_config["max_n"]
-    assert bleu_metric.smooth_method == original_config["smooth_method"]
-    assert bleu_metric.smooth_value == original_config["smooth_value"]
-    assert bleu_metric.tokenize == original_config["tokenize"]
-    assert bleu_metric.lowercase == original_config["lowercase"]
+    assert bleu_metric.config.max_n == original_config["max_n"]
+    assert bleu_metric.config.smooth_method == original_config["smooth_method"]
+    assert bleu_metric.config.smooth_value == original_config["smooth_value"]
+    assert bleu_metric.config.tokenize == original_config["tokenize"]
+    assert bleu_metric.config.lowercase == original_config["lowercase"]
 
 
 # Observer notification tests
@@ -577,7 +580,7 @@ def test_score_normalization(bleu_metric, bleu_score_100, expected_normalized):
 @pytest.mark.parametrize("max_n", [1, 2, 3, 4, 5])
 def test_different_max_n_values(max_n):
     """BLEU metric works with different max_n values."""
-    bleu_metric = BleuMetric(max_n=max_n)
+    bleu_metric = BleuMetric(config=BleuConfig(max_n=max_n))
 
     mock_bleu_scorer = Mock()
     mock_score_result = Mock()
@@ -598,19 +601,19 @@ def test_different_max_n_values(max_n):
 
         # Check that we have scores for 1 to max_n
         for n in range(1, max_n + 1):
-            assert f"bleu_{n}" in result.details
+            assert result.details.get(f"bleu_{n}") is not None
             assert result.details[f"bleu_{n}"] > 0
 
         # Check that we don't have scores beyond max_n
         for n in range(max_n + 1, 6):
-            if f"bleu_{n}" in result.details:
-                assert result.details[f"bleu_{n}"] == 0.0
+            if result.details.get(f"bleu_{n}") is not None:
+                assert result.details.get(f"bleu_{n}") == 0.0
 
 
 @pytest.mark.parametrize("smooth_method", ["exp", "floor", "add-k", "none"])
 def test_different_smoothing_methods(smooth_method):
     """BLEU metric works with different smoothing methods."""
-    bleu_metric = BleuMetric(smooth_method=smooth_method)
+    bleu_metric = BleuMetric(config=BleuConfig(smooth_method=smooth_method))
 
     with patch("sacrebleu.BLEU") as mock_sacrebleu_class:
         mock_bleu_scorer = Mock()
@@ -627,7 +630,7 @@ def test_different_smoothing_methods(smooth_method):
 @pytest.mark.parametrize("tokenize_method", ["13a", "intl", "zh", "ja-mecab", "none"])
 def test_different_tokenize_methods(tokenize_method):
     """BLEU metric works with different tokenization methods."""
-    bleu_metric = BleuMetric(tokenize=tokenize_method)
+    bleu_metric = BleuMetric(config=BleuConfig(tokenize=tokenize_method))
 
     with patch("sacrebleu.BLEU") as mock_sacrebleu_class:
         mock_bleu_scorer = Mock()

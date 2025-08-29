@@ -133,7 +133,7 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --extras "all"
       - name: Run Pyright
         run: make check
 
@@ -148,7 +148,7 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --extras "all"
       - name: Run pylint
         run: make lint
 
@@ -165,7 +165,7 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --extras "all"
       - name: Run pytest
         run: make test
 

@@ -1,7 +1,7 @@
 .PHONY: init
 init:
 	cp .env.example .env
-	poetry install --no-root
+	poetry install --extras "all" --no-root
 
 .PHONY: install
 install: 

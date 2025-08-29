@@ -8,32 +8,51 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
+# Core dependencies - always installed
 pydantic = "^2.10.6"
-bert-score = "^0.3.13"
 fastapi = "^0.116.1"
 uvicorn = { extras = ["standard"], version = "^0.35.0" }
 pydantic-settings = "^2.10.1"
 redis = "^6.4.0"
 celery = "^5.5.3"
 python-multipart = "^0.0.20"
-pytest = "^8.4.1"
-pytest-asyncio = "^1.1.0"
-httpx = "^0.28.1"
-black = "^25.1.0"
-pyright = "^1.1.403"
-pylint = "^3.3.8"
-sacrebleu = "^2.5.1"
-rouge-score = "^0.1.2"
 
+# Optional dependencies for specific metrics
+bert-score = { version = "^0.3.13", optional = true }
+sacrebleu = { version = "^2.5.1", optional = true }
+rouge-score = { version = "^0.1.2", optional = true }
+
+# Development dependencies
+pytest = { version = "^8.4.1", optional = true }
+pytest-asyncio = { version = "^1.1.0", optional = true }
+httpx = { version = "^0.28.1", optional = true }
+black = { version = "^25.1.0", optional = true }
+pyright = { version = "^1.1.403", optional = true }
+pylint = { version = "^3.3.8", optional = true }
+
+[tool.poetry.extras]
+# Individual metric extras
+bert = ["bert-score"]
+bleu = ["sacrebleu"]
+rouge = ["rouge-score"]
+
+# Grouped extras
+nlp-metrics = ["bert-score", "sacrebleu", "rouge-score"]
+
+# Development extras
+test = ["pytest", "pytest-asyncio", "httpx"]
+lint = ["black", "pyright", "pylint"]
+dev = ["pytest", "pytest-asyncio", "httpx", "black", "pyright", "pylint"]
+
+# Convenience extras
+all = ["bert-score", "sacrebleu", "rouge-score", "pytest", "pytest-asyncio", "httpx", "black", "pyright", "pylint"]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-
 
 [tool.pyright]
 exclude = ["**/__pycache__"]

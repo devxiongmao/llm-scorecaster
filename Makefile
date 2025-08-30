@@ -9,7 +9,19 @@ install:
 
 .PHONY: dev
 dev:
-	poetry run uvicorn src.main:app --reload
+	poetry run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+.PHONY: worker
+worker:
+	poetry run celery -A src.tasks.celery_app worker --loglevel=info --concurrency=4
+
+.PHONY: redis-start
+redis-start:
+	redis-server --daemonize yes --port 6379
+
+.PHONY: redis-stop
+redis-stop:
+	redis-cli shutdown
 
 .PHONY: test
 test:

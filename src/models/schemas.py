@@ -61,3 +61,46 @@ class MetricsResponse(BaseModel):
     message: str
     results: List[TextPairResult]
     processing_time_seconds: float
+
+
+class AsyncJobResponse(BaseModel):
+    """Response model for async job submission."""
+
+    job_id: str = Field(..., description="Unique identifier for the submitted job")
+    status: str = Field(..., description="Current status of the job")
+    message: str = Field(..., description="Human-readable status message")
+    estimated_completion_time: Optional[float] = Field(
+        None, description="Estimated completion time in seconds"
+    )
+
+
+class JobStatusResponse(BaseModel):
+    """Response model for job status queries."""
+
+    job_id: str = Field(..., description="Unique identifier for the job")
+    status: str = Field(..., description="Current status of the job")
+    message: str = Field(..., description="Human-readable status message")
+    progress: Optional[int] = Field(
+        default=None, ge=0, le=100, description="Progress percentage (0-100)"
+    )
+    total_pairs: Optional[int] = Field(
+        default=None, description="Total number of text pairs being processed"
+    )
+    total_metrics: Optional[int] = Field(
+        default=None, description="Total number of metrics being computed"
+    )
+    completed: Optional[bool] = Field(
+        default=False, description="Whether the job has completed successfully"
+    )
+    failed: Optional[bool] = Field(
+        default=False, description="Whether the job has failed"
+    )
+    error: Optional[str] = Field(
+        default=None, description="Error message if the job failed"
+    )
+    started_at: Optional[str] = Field(
+        default=None, description="ISO timestamp when the job started processing"
+    )
+    completed_at: Optional[str] = Field(
+        default=None, description="ISO timestamp when the job completed"
+    )

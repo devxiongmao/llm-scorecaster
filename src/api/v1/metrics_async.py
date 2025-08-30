@@ -15,7 +15,7 @@ from src.models.schemas import (
     AsyncJobResponse,
 )
 from src.api.auth.dependencies import verify_api_key
-from src.tasks.celery_app import compute_metrics_task
+from src.tasks.celery_app import compute_metrics_task, health_check_task
 
 router = APIRouter()
 
@@ -42,7 +42,7 @@ async def evaluate_metrics_async(
         job_id = str(uuid.uuid4())
 
         # Convert the Pydantic model to dict for Celery serialization
-        request_data = request.dict()
+        request_data = request.model_dump()
 
         # Submit the task to Celery with custom task ID
         task = compute_metrics_task.apply_async(args=[request_data], task_id=job_id)
@@ -81,9 +81,6 @@ async def health_check_async(
     to process tasks.
     """
     try:
-        # Submit a simple health check task
-        from src.tasks.celery_app import health_check_task
-
         # Use a short timeout to quickly determine if workers are available
         task = health_check_task.apply_async()
 

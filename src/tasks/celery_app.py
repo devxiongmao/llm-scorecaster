@@ -81,22 +81,12 @@ def compute_metrics_for_request(request_data: Dict[str, Any]) -> List[Dict[str, 
             candidate=text_pair.candidate,
             metrics=pair_results,
         )
-        results.append(result_data.dict())
+        results.append(result_data.model_dump())
 
     return results
 
 
-@celery_app.task(bind=True, name="compute_metrics_async")
-def compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Celery task for computing metrics asynchronously.
-
-    Args:
-        request_data: Serialized MetricsRequest data
-
-    Returns:
-        Dictionary containing the results and metadata
-    """
+def _compute_metrics_task_logic(self, request_data):
     try:
         start_time = time.time()
 
@@ -157,6 +147,20 @@ def compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
 
         # Re-raise the exception so Celery can handle it properly
         raise exc
+
+
+@celery_app.task(bind=True, name="compute_metrics_async")
+def compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Celery task for computing metrics asynchronously.
+
+    Args:
+        request_data: Serialized MetricsRequest data
+
+    Returns:
+        Dictionary containing the results and metadata
+    """
+    return _compute_metrics_task_logic(self, request_data)
 
 
 @celery_app.task(name="health_check")

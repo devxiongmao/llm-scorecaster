@@ -41,77 +41,89 @@ async def get_job_status(
     """
     try:
         task = get_celery_task_info(job_id)
-
-        if task.state == "PENDING":
-            return JobStatusResponse(
-                job_id=job_id,
-                status="PENDING",
-                message="Job is queued and waiting to be processed",
-                progress=0,
-            )
-
-        if task.state == "PROCESSING":
-            # Get progress information from task metadata
-            task_info = task.info or {}
-            return JobStatusResponse(
-                job_id=job_id,
-                status="PROCESSING",
-                message=task_info.get("message", "Job is being processed"),
-                progress=task_info.get("progress", 0),
-                total_pairs=task_info.get("total_pairs"),
-                total_metrics=task_info.get("total_metrics"),
-            )
-
-        if task.state == "SUCCESS":
-            return JobStatusResponse(
-                job_id=job_id,
-                status="COMPLETED",
-                message="Job completed successfully. Results are ready.",
-                progress=100,
-                completed=True,
-            )
-
-        if task.state == "FAILURE":
-            # Get error information from task metadata
-            task_info = task.info or {}
-            error_message = task_info.get("error", "Job failed with unknown error")
-
-            return JobStatusResponse(
-                job_id=job_id,
-                status="FAILED",
-                message=error_message,
-                error=error_message,
-                failed=True,
-            )
-
-        if task.state == "RETRY":
-            return JobStatusResponse(
-                job_id=job_id,
-                status="RETRYING",
-                message="Job failed and is being retried",
-                progress=0,
-            )
-
-        if task.state == "REVOKED":
-            return JobStatusResponse(
-                job_id=job_id,
-                status="CANCELLED",
-                message="Job was cancelled",
-                failed=True,
-            )
-
-        # Handle any other unknown states
-        return JobStatusResponse(
-            job_id=job_id,
-            status=task.state,
-            message=f"Job is in state: {task.state}",
-        )
+        return _build_status_response(job_id, task)
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve job status: {str(e)}",
         ) from e
+
+
+def _build_status_response(job_id: str, task) -> JobStatusResponse:
+    """Build appropriate JobStatusResponse based on task state."""
+
+    # Status mapping with response builders
+    status_handlers = {
+        "PENDING": lambda: JobStatusResponse(
+            job_id=job_id,
+            status="PENDING",
+            message="Job is queued and waiting to be processed",
+            progress=0,
+        ),
+        "PROCESSING": lambda: _build_processing_response(job_id, task),
+        "SUCCESS": lambda: JobStatusResponse(
+            job_id=job_id,
+            status="COMPLETED",
+            message="Job completed successfully. Results are ready.",
+            progress=100,
+            completed=True,
+        ),
+        "FAILURE": lambda: _build_failure_response(job_id, task),
+        "RETRY": lambda: JobStatusResponse(
+            job_id=job_id,
+            status="RETRYING",
+            message="Job failed and is being retried",
+            progress=0,
+        ),
+        "REVOKED": lambda: JobStatusResponse(
+            job_id=job_id,
+            status="CANCELLED",
+            message="Job was cancelled",
+            failed=True,
+        ),
+    }
+
+    # Get handler or use default
+    handler = status_handlers.get(
+        task.state, lambda: _build_unknown_response(job_id, task)
+    )
+    return handler()
+
+
+def _build_processing_response(job_id: str, task) -> JobStatusResponse:
+    """Build response for PROCESSING state."""
+    task_info = task.info or {}
+    return JobStatusResponse(
+        job_id=job_id,
+        status="PROCESSING",
+        message=task_info.get("message", "Job is being processed"),
+        progress=task_info.get("progress", 0),
+        total_pairs=task_info.get("total_pairs"),
+        total_metrics=task_info.get("total_metrics"),
+    )
+
+
+def _build_failure_response(job_id: str, task) -> JobStatusResponse:
+    """Build response for FAILURE state."""
+    task_info = task.info or {}
+    error_message = task_info.get("error", "Job failed with unknown error")
+    return JobStatusResponse(
+        job_id=job_id,
+        status="FAILED",
+        message=error_message,
+        error=error_message,
+        failed=True,
+    )
+
+
+def _build_unknown_response(job_id: str, task) -> JobStatusResponse:
+    """Build response for unknown task states."""
+    return JobStatusResponse(
+        job_id=job_id,
+        status=task.state,
+        message=f"Job is in state: {task.state}",
+    )
 
 
 @router.get("/results/{job_id}", response_model=MetricsResponse)
@@ -256,18 +268,12 @@ async def cancel_job(
 @router.get("/")
 async def list_active_jobs(
     _authenticated: bool = Depends(verify_api_key),
-    limit: int = Query(
-        50, ge=1, le=100, description="Maximum number of jobs to return"
-    ),
 ) -> Dict[str, Any]:
     """
     List active jobs (optional endpoint for monitoring).
 
     Note: This requires additional Celery configuration to work properly
     and may not be available in all setups.
-
-    Args:
-        limit: Maximum number of jobs to return
 
     Returns:
         Dictionary containing active job information
@@ -292,7 +298,7 @@ async def list_active_jobs(
         active_jobs = []
         if active_tasks:
             for worker, tasks in active_tasks.items():
-                for task in tasks[:limit]:
+                for task in tasks:
                     active_jobs.append(
                         {
                             "job_id": task.get("id"),
@@ -306,7 +312,7 @@ async def list_active_jobs(
         scheduled_jobs = []
         if scheduled_tasks:
             for worker, tasks in scheduled_tasks.items():
-                for task in tasks[:limit]:
+                for task in tasks:
                     scheduled_jobs.append(
                         {
                             "job_id": (
@@ -319,8 +325,8 @@ async def list_active_jobs(
 
         return {
             "message": f"Found {len(active_jobs)} active and {len(scheduled_jobs)} scheduled jobs",
-            "active_jobs": active_jobs[:limit],
-            "scheduled_jobs": scheduled_jobs[:limit],
+            "active_jobs": active_jobs,
+            "scheduled_jobs": scheduled_jobs,
             "total_count": len(active_jobs) + len(scheduled_jobs),
         }
 

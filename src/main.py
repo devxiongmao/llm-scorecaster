@@ -24,10 +24,12 @@ app.add_middleware(
 app.include_router(
     metrics_sync.router,
     prefix="/api/v1/metrics",
-    tags=["Synchronous Metrics"],
+    tags=["synchronous-metrics"],
 )
 
-app.include_router(metrics_async.router, prefix="/api/v1/async", tags=["async-metrics"])
+app.include_router(
+    metrics_async.router, prefix="/api/v1/async", tags=["asynchronous-mtrics"]
+)
 
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])
 

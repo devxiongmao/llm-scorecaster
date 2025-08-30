@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.core.settings import settings
-from src.api.v1 import metrics_sync
+from src.api.v1 import metrics_sync, metrics_async, jobs
 
 app = FastAPI(
     title="llm-scorecaster",
@@ -24,8 +24,14 @@ app.add_middleware(
 app.include_router(
     metrics_sync.router,
     prefix="/api/v1/metrics",
-    tags=["Synchronous Metrics"],
+    tags=["synchronous-metrics"],
 )
+
+app.include_router(
+    metrics_async.router, prefix="/api/v1/async", tags=["asynchronous-mtrics"]
+)
+
+app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])
 
 
 @app.get("/")

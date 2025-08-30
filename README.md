@@ -513,9 +513,11 @@ The registry will automatically discover it on the next discover_metrics() call!
 
 ## Development Status
 
-🟢 **Ready**: Synchronous API with placeholder metrics  
-🟡 **In Progress**: Actual metric implementations  
-🔴 **Planned**: Asynchronous API, Celery workers
+🟢 **Ready**: Synchronous API with placeholder metrics
+🟢 **Ready**: BERT, BLEU and ROUGE metric implementation
+🟡 **In Progress**: Asynchronous API, Celery workers
+🔴 **Planned**: Webhook API, post your results back when ready
+🔴 **Planned**: Dockerize the app
 
 ## Contributing
 

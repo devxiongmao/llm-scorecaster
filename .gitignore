@@ -3,4 +3,8 @@
 # Python
 __pycache__/
 
+# VScode
 .vscode
+
+# Redis dump
+dump.rdb

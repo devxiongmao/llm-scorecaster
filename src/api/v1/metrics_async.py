@@ -45,7 +45,7 @@ async def evaluate_metrics_async(
         request_data = request.model_dump()
 
         # Submit the task to Celery with custom task ID
-        task = compute_metrics_task.apply_async(args=[request_data], task_id=job_id) # type: ignore
+        task = compute_metrics_task.apply_async(args=[request_data], task_id=job_id)  # type: ignore
 
         # Verify the task was submitted successfully
         if not task.id:
@@ -82,7 +82,7 @@ async def health_check_async(
     """
     try:
         # Use a short timeout to quickly determine if workers are available
-        task = health_check_task.apply_async() # type: ignore
+        task = health_check_task.apply_async()  # type: ignore
 
         try:
             # Wait up to 5 seconds for the health check

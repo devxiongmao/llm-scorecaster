@@ -1,12 +1,12 @@
 # LLM-Scorecaster
 
-An open-source REST API for evaluating Large Language Model (LLM) responses using various metrics like BERT Score, BLEU, ROUGE, and AlignScore. This tool provides both synchronous and asynchronous processing capabilities for comprehensive LLM evaluation.
+An open-source REST API for evaluating Large Language Model (LLM) responses using various metrics like BERT Score, BLEU, ROUGE, and more. This tool provides both synchronous and asynchronous processing capabilities for comprehensive LLM evaluation.
 
 ## Features
 
 - **Multiple Metrics**: Support for BERT Score, BLEU (multiple N-grams), ROUGE (1, 2, L and L-Sum) to name a few
 - **Synchronous API**: Real-time evaluation for immediate feedback
-- **Asynchronous API**: Batch processing for large-scale evaluation (coming soon)
+- **Asynchronous API**: Batch processing for large-scale evaluation
 - **Simple Authentication**: API key-based authentication
 - **Extensible Architecture**: Easy to add new metrics
 - **Fast & Lightweight**: Built with FastAPI for high performance
@@ -98,7 +98,7 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 4. **Start Redis (required for async processing):**
 
    ```bash
-   # Using Docker
+   # Using Docker (Coming Soon)
    docker run -d -p 6379:6379 redis:alpine
 
    # Or install locally (macOS)
@@ -108,7 +108,14 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 
 5. **Run the API server:**
    ```bash
+   # In one terminal
+   make redis-start
+
+   # In one terminal
    make dev
+
+   # In another terminal
+   make worker
    ```
 
 The API will be available at `http://localhost:8000`
@@ -194,7 +201,72 @@ curl -X POST "http://localhost:8000/api/v1/metrics/evaluate" \
   }'
 ```
 
-### Response Format
+### Asynchronous Evaluation
+
+Users also have the option of using an async version of the API along with polling to check the status of the results. Notice the change in URL.
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/async/evaluate" \
+  -H "Authorization: Bearer your-secret-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text_pairs": [
+      {
+        "reference": "The cat sat on the mat",
+        "candidate": "A cat was sitting on a mat"
+      },
+      {
+        "reference": "Hello world, how are you?",
+        "candidate": "Hi there world, how are you doing?"
+      }
+    ],
+    "metrics": ["bert_score", "bleu_score", "rouge_score"],
+    "batch_size": 32
+  }'
+```
+
+The response from this request is:
+
+```json
+{
+  "job_id":"b43339ba-35a9-4d15-9700-e0cd85f0b001",
+  "status":"PENDING",
+  "message":"Job queued successfully. Use the job ID to check status and retrieve results.",
+  "estimated_completion_time":3.0
+}
+```
+
+### Managing Async Jobs
+
+Taking the returned `job_id` from a `/api/v1/async/evaluate` request, users can query a status endpoint for the status of their results.
+
+```bash
+curl -X GET "http://localhot:8000/api/v1/jobs/status/b43339ba-35a9-4d15-9700-e0cd85f0b001" \
+  -H "Authorization: Bearer your-secret-api-key-here"
+```
+
+Once ready, results can be requested via:
+
+```bash
+curl -X GET "http://localhot:8000/api/v1/jobs/results/b43339ba-35a9-4d15-9700-e0cd85f0b001" \
+  -H "Authorization: Bearer your-secret-api-key-here"
+```
+
+Users can also delete an active job if so desired:
+
+```bash
+curl -X DELETE "http://localhot:8000/api/v1/jobs/b43339ba-35a9-4d15-9700-e0cd85f0b001" \
+  -H "Authorization: Bearer your-secret-api-key-here"
+```
+
+Users can also query for a list of active jobs:
+
+```bash
+curl -X GET "http://localhot:8000/api/v1/jobs/" \
+  -H "Authorization: Bearer your-secret-api-key-here"
+```
+
+### Results Response Format
 
 ```json
 {
@@ -356,7 +428,7 @@ Within the `src/core/metrics` folder lies all code related to specific metrics c
 
 - `bert_score`: Contextual embeddings-based evaluation
 - `bleu_score`: Bilingual Evaluation Understudy score (multipl N-grams supported)
-- `rouge_l`: Recall-Oriented Understudy for Gisting Evaluation (Longest Common Subsequence). RROUGE-1 (unigram overlap), ROUGE-2 (bigram overlap), ROUGE-L and ROUGE-LSUM are supported
+- `rouge_score`: Recall-Oriented Understudy for Gisting Evaluation (Longest Common Subsequence). ROUGE-1 (unigram overlap), ROUGE-2 (bigram overlap), ROUGE-L and ROUGE-LSUM are supported
 
 ## Using a Metric Observer
 
@@ -441,9 +513,11 @@ The registry will automatically discover it on the next discover_metrics() call!
 
 ## Development Status
 
-🟢 **Ready**: Synchronous API with placeholder metrics  
-🟡 **In Progress**: Actual metric implementations  
-🔴 **Planned**: Asynchronous API, Celery workers
+🟢 **Ready**: Synchronous API with placeholder metrics
+🟢 **Ready**: BERT, BLEU and ROUGE metric implementation
+🟡 **In Progress**: Asynchronous API, Celery workers
+🔴 **Planned**: Webhook API, post your results back when ready
+🔴 **Planned**: Dockerize the app
 
 ## Contributing
 

@@ -1,0 +1,46 @@
+C4Component
+    title Component diagram for Async Worker Container
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+    Container_Ext(apiGateway, "API Gateway", "FastAPI application that queues async tasks and provides job endpoints")
+    Container_Ext(metricsEngine, "Metrics Engine", "Core metrics calculation engine with pluggable implementations")
+    System_Ext(celeryBroker, "Message Broker", "Redis or RabbitMQ system for managing asynchronous task queues")
+    System_Ext(userWebhookService, "User Webhook Endpoint", "External service to receive async results notifications")
+
+    Container_Boundary(asyncWorker, "Async Worker - Celery Processing") {
+        Component(celeryApp, "Celery App", "Python/Celery", "Main Celery application configuration and task discovery", $tags="primary")
+        Component(computeTask, "Compute Metrics Task", "Celery Task", "Async task that processes metrics computation requests")
+        Component(healthTask, "Health Check Task", "Celery Task", "Simple task for worker health monitoring and diagnostics")
+        Component(webhookClient, "Webhook Client", "Python/HTTP", "Handles delivery of results to user webhook endpoints")
+    }
+
+    Rel(apiGateway, celeryBroker, "Queues tasks to", "Celery Protocol")
+    Rel(celeryBroker, celeryApp, "Delivers tasks to", "Celery Protocol")
+    
+    Rel(celeryApp, computeTask, "Routes metrics tasks to", "Celery Task")
+    Rel(celeryApp, healthTask, "Routes health checks to", "Celery Task")
+    
+    Rel(computeTask, webhookClient, "Triggers webhook delivery", "Python")
+    Rel(healthTask, webhookClient, "Triggers webhook delivery", "Python")
+    
+    Rel(computeTask, metricsEngine, "Calls for computation", "Python API")
+    Rel(webhookClient, userWebhookService, "Posts results to", "HTTPS/POST")
+    
+    UpdateRelStyle(apiGateway, celeryBroker, $offsetY="-30", $offsetX="30")
+    UpdateRelStyle(celeryBroker, celeryApp, $offsetY="0", $offsetX="-40")
+    
+    UpdateRelStyle(celeryApp, computeTask, $offsetX="-60", $offsetY="30")
+    UpdateRelStyle(celeryApp, healthTask, $offsetX="60", $offsetY="30")
+    
+    UpdateRelStyle(webhookClient, userWebhookService, $offsetY="40", $offsetX="60")
+    
+    UpdateElementStyle(celeryApp, $bgColor="#1168BD", $fontColor="#ffffff")
+    UpdateElementStyle(computeTask, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(healthTask, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(webhookClient, $bgColor="#438DD5", $fontColor="#ffffff")
+    
+    UpdateElementStyle(apiGateway, $bgColor="#408E3A", $fontColor="#ffffff")
+    UpdateElementStyle(metricsEngine, $bgColor="#408E3A", $fontColor="#ffffff")
+    UpdateElementStyle(celeryBroker, $bgColor="#D93A2C", $fontColor="#ffffff")
+    UpdateElementStyle(userWebhookService, $bgColor="#999999")

@@ -1,0 +1,43 @@
+C4Container
+    title Container diagram for LLM Scorecaster
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+    Person(developer, "Developer", "A developer who needs to evaluate LLM outputs for their applications", $tags="user")
+    Person(analyst, "Data Analyst", "An analyst who evaluates LLM performance for model improvement and reporting", $tags="user")
+    Person(researcher, "ML Researcher", "A researcher comparing different LLM models and techniques", $tags="user")
+    System_Ext(userWebhookService, "User Webhook Endpoint", "External service owned by API users to receive async results notifications")
+    System_Ext(celeryBroker, "Message Broker", "Redis or RabbitMQ system for managing asynchronous task queues")
+    
+    Container_Boundary(c1, "LLM Scorecaster System") {
+        Container(apiGateway, "API Gateway", "FastAPI", "Provides REST API endpoints for synchronous and asynchronous metrics evaluation", $tags="primary")
+        Container(metricsEngine, "Metrics Engine", "Python", "Core metrics calculation engine with pluggable implementations (BERT, BLEU, ROUGE)")
+        Container(asyncWorker, "Async Worker", "Celery", "Handles asynchronous metrics processing tasks and webhook notifications")
+    }
+    
+    Rel(developer, apiGateway, "Evaluates LLM outputs", "HTTPS/REST")
+    Rel(analyst, apiGateway, "Analyzes model performance", "HTTPS/REST")
+    Rel(researcher, apiGateway, "Compares models and techniques", "HTTPS/REST")
+    
+    Rel(apiGateway, metricsEngine, "Uses for sync calculations", "Python API")
+    Rel(apiGateway, asyncWorker, "Queues async tasks", "Celery")
+    Rel(asyncWorker, metricsEngine, "Uses for async calculations", "Python API")
+    Rel(asyncWorker, userWebhookService, "Sends results to", "HTTPS/POST")
+    
+    Rel(asyncWorker, celeryBroker, "Receives tasks from", "Redis/RabbitMQ")
+    Rel(apiGateway, celeryBroker, "Queues tasks to", "Redis/RabbitMQ")
+    
+    UpdateRelStyle(developer, apiGateway, $offsetY="-30")
+    UpdateRelStyle(analyst, apiGateway, $offsetY="0")
+    UpdateRelStyle(researcher, apiGateway, $offsetY="30")
+    UpdateRelStyle(apiGateway, metricsEngine, $offsetY="-15")
+    UpdateRelStyle(asyncWorker, userWebhookService, $offsetX="30")
+    
+    UpdateElementStyle(apiGateway, $bgColor="#3B7EA1", $fontColor="#ffffff")
+    UpdateElementStyle(metricsEngine, $bgColor="#3B7EA1", $fontColor="#ffffff")
+    UpdateElementStyle(asyncWorker, $bgColor="#3B7EA1", $fontColor="#ffffff")
+    UpdateElementStyle(userWebhookService, $bgColor="#999999")
+    UpdateElementStyle(celeryBroker, $bgColor="#D93A2C", $fontColor="#ffffff")
+
+    
+    UpdateElementStyle(developer, $bgColor="#08427B")
+    UpdateElementStyle(analyst, $bgColor="#08427B")
+    UpdateElementStyle(researcher, $bgColor="#08427B")

@@ -1,0 +1,74 @@
+C4Component
+    title Component diagram for API Gateway Container
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+    Person(developer, "Developer", "A developer who needs to evaluate LLM outputs for their applications", $tags="user")
+    Person(analyst, "Data Analyst", "An analyst who evaluates LLM performance for model improvement and reporting", $tags="user")
+    Person(researcher, "ML Researcher", "A researcher comparing different LLM models and techniques", $tags="user")
+
+    Container_Ext(metricsEngine, "Metrics Engine", "Core metrics calculation engine with pluggable implementations")
+    Container_Ext(celeryBroker, "Message Broker", "Redis or RabbitMQ system for managing asynchronous task queues")
+    Container_Ext(asyncWorker, "Async Worker", "Handles asynchronous metrics processing and webhook notifications")
+
+    Container_Boundary(apiGateway, "API Gateway - FastAPI App") {
+        Component(authDeps, "Auth Dependencies", "FastAPI/Python", "Validates API keys and manages authentication", $tags="primary")
+        Component(syncEndpoints, "Sync Metrics Endpoints", "FastAPI/Python", "Handle synchronous metrics evaluation requests")
+        Component(asyncEndpoints, "Async Metrics Endpoints", "FastAPI/Python", "Handle asynchronous metrics evaluation requests with webhook support")
+        Component(jobsEndpoints, "Jobs Endpoints", "FastAPI/Python", "Provide job status checking and results retrieval")
+        Component(schemas, "Pydantic Models", "Python", "Define request/response schemas and data validation")
+        Component(middleware, "FastAPI Middleware", "Python", "Handle CORS, logging, error handling, and request/response processing")
+        Component(router, "API Router", "FastAPI", "Route requests to appropriate endpoints and handle path parameters")
+    }
+
+    Rel(developer, middleware, "Sends requests to", "HTTPS")
+    Rel(analyst, middleware, "Sends requests to", "HTTPS")
+    Rel(researcher, middleware, "Sends requests to", "HTTPS")
+
+    Rel(middleware, router, "Routes requests through", "FastAPI")
+    Rel(router, authDeps, "Validates auth with", "Dependency Injection")
+    Rel(router, syncEndpoints, "Routes sync requests to", "FastAPI")
+    Rel(router, asyncEndpoints, "Routes async requests to", "FastAPI")
+    Rel(router, jobsEndpoints, "Routes job requests to", "FastAPI")
+    
+    Rel(syncEndpoints, schemas, "Validates with", "Pydantic")
+    Rel(asyncEndpoints, schemas, "Validates with", "Pydantic")
+    Rel(jobsEndpoints, schemas, "Validates with", "Pydantic")
+    
+    Rel(syncEndpoints, metricsEngine, "Calls directly", "Python API")
+    Rel(asyncEndpoints, celeryBroker, "Queues tasks to", "Celery")
+    Rel(jobsEndpoints, asyncWorker, "Checks status with", "Celery API")
+    
+    UpdateRelStyle(developer, middleware, $offsetY="-40", $offsetX="-30")
+    UpdateRelStyle(analyst, middleware, $offsetY="0", $offsetX="0")
+    UpdateRelStyle(researcher, middleware, $offsetY="40", $offsetX="-30")
+    
+    UpdateRelStyle(middleware, router, $offsetX="-50")
+    UpdateRelStyle(router, authDeps, $offsetY="-30", $offsetX="-40")
+    UpdateRelStyle(router, syncEndpoints, $offsetX="-80", $offsetY="20")
+    UpdateRelStyle(router, asyncEndpoints, $offsetX="0", $offsetY="30")
+    UpdateRelStyle(router, jobsEndpoints, $offsetX="80", $offsetY="20")
+    
+    UpdateRelStyle(syncEndpoints, schemas, $offsetX="-40", $offsetY="-20")
+    UpdateRelStyle(asyncEndpoints, schemas, $offsetX="0", $offsetY="-30")
+    UpdateRelStyle(jobsEndpoints, schemas, $offsetX="40", $offsetY="-20")
+    
+    UpdateRelStyle(syncEndpoints, metricsEngine, $offsetY="30", $offsetX="-60")
+    UpdateRelStyle(asyncEndpoints, celeryBroker, $offsetY="40", $offsetX="0")
+    UpdateRelStyle(jobsEndpoints, asyncWorker, $offsetY="30", $offsetX="60")
+    
+    UpdateElementStyle(authDeps, $bgColor="#1168BD", $fontColor="#ffffff")
+    UpdateElementStyle(syncEndpoints, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(asyncEndpoints, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(jobsEndpoints, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(schemas, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(middleware, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(router, $bgColor="#438DD5", $fontColor="#ffffff")
+    
+    UpdateElementStyle(metricsEngine, $bgColor="#408E3A", $fontColor="#ffffff")
+    UpdateElementStyle(celeryBroker, $bgColor="#D93A2C", $fontColor="#ffffff")
+    UpdateElementStyle(asyncWorker, $bgColor="#408E3A", $fontColor="#ffffff")
+    
+    UpdateElementStyle(developer, $bgColor="#08427B")
+    UpdateElementStyle(analyst, $bgColor="#08427B")
+    UpdateElementStyle(researcher, $bgColor="#08427B")

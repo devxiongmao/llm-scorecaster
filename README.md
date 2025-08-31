@@ -74,7 +74,7 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
    | `bleu` | sacrebleu | BLEU Score metric only |
    | `rouge` | rouge-score | ROUGE Score metric only |
    | `nlp-metrics` | All metric libraries | All NLP evaluation metrics |
-   | `test` | pytest, pytest-asyncio, httpx | Testing framework |
+   | `test` | pytest, pytest-asyncio | Testing framework |
    | `lint` | black, pyright, pylint | Code quality tools |
    | `dev` | All test + lint tools | Full development setup |
    | `all` | Everything | Complete installation |

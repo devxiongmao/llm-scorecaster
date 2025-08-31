@@ -1,0 +1,49 @@
+C4Component
+    title Component diagram for Metrics Engine Container
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+    Container_Ext(apiGateway, "API Gateway", "FastAPI application handling REST endpoints and request routing")
+    Container_Ext(asyncWorker, "Async Worker", "Celery worker processing asynchronous metrics calculations")
+
+    Container_Boundary(metricsEngine, "Metrics Engine - Core Processing") {
+        Component(registry, "Metrics Registry", "Python", "Discovers metric implementations and acts as factory to create instances")
+        Component(bertScore, "BERT Score Implementation", "Python/bert-score", "Calculates semantic similarity using BERT embeddings")
+        Component(bleuScore, "BLEU Score Implementation", "Python/sacrebleu", "Measures n-gram precision for translation quality")
+        Component(rougeScore, "ROUGE Score Implementation", "Python/rouge-score", "Evaluates recall-based metrics for summarization")
+        Component(computeFunction, "Compute Function", "Python", "Orchestrates metric computation across text pairs using registry")
+    }
+
+    Rel(apiGateway, computeFunction, "Calls for sync processing", "Python API")
+    Rel(asyncWorker, computeFunction, "Calls for async processing", "Python API")
+    Rel(computeFunction, registry, "Gets metric instances from", "Factory Pattern")
+
+    Rel(registry, bertScore, "Discovers and instantiates", "Python Import/Factory")
+    Rel(registry, bleuScore, "Discovers and instantiates", "Python Import/Factory")
+    Rel(registry, rougeScore, "Discovers and instantiates", "Python Import/Factory")
+    
+    Rel(computeFunction, bertScore, "Calls compute_single on", "Python Method")
+    Rel(computeFunction, bleuScore, "Calls compute_single on", "Python Method")
+    Rel(computeFunction, rougeScore, "Calls compute_single on", "Python Method")
+    
+    UpdateRelStyle(apiGateway, computeFunction, $offsetY="-20", $offsetX="-30")
+    UpdateRelStyle(asyncWorker, computeFunction, $offsetY="20", $offsetX="-30")
+    UpdateRelStyle(computeFunction, registry, $offsetX="-60", $offsetY="0")
+    
+    UpdateRelStyle(registry, bertScore, $offsetX="-60", $offsetY="30")
+    UpdateRelStyle(registry, bleuScore, $offsetX="0", $offsetY="40")
+    UpdateRelStyle(registry, rougeScore, $offsetX="60", $offsetY="30")
+    
+    UpdateRelStyle(computeFunction, bertScore, $offsetX="-40", $offsetY="50")
+    UpdateRelStyle(computeFunction, bleuScore, $offsetX="0", $offsetY="60")
+    UpdateRelStyle(computeFunction, rougeScore, $offsetX="40", $offsetY="50")
+    
+    UpdateElementStyle(registry, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(bertScore, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(bleuScore, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(rougeScore, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(metricFactory, $bgColor="#438DD5", $fontColor="#ffffff")
+    UpdateElementStyle(resultProcessor, $bgColor="#438DD5", $fontColor="#ffffff")
+    
+    UpdateElementStyle(apiGateway, $bgColor="#408E3A", $fontColor="#ffffff")
+    UpdateElementStyle(asyncWorker, $bgColor="#408E3A", $fontColor="#ffffff")

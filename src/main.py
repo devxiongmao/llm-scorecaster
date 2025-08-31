@@ -28,7 +28,7 @@ app.include_router(
 )
 
 app.include_router(
-    metrics_async.router, prefix="/api/v1/async", tags=["asynchronous-mtrics"]
+    metrics_async.router, prefix="/api/v1/async", tags=["asynchronous-metrics"]
 )
 
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])

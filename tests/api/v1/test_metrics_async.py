@@ -36,6 +36,24 @@ def valid_request_body_fixture():
     ).model_dump()
 
 
+@pytest.fixture(scope="module", name="valid_request_body_webhook")
+def valid_request_body_webhook_fixture():
+    return MetricsRequest(
+        text_pairs=[
+            TextPair(
+                reference="The quick brown fox jumps over the lazy dog.",
+                candidate="A swift auburn fox leaps over a sleepy canine.",
+            ),
+            TextPair(
+                reference="Hello world, how are you?",
+                candidate="Hi world, how are you doing?",
+            ),
+        ],
+        metrics=[MetricType("bert_score")],
+        webhook_url="http://www.this-is-a-fake-domain.com/results",
+    ).model_dump()
+
+
 @pytest.fixture(scope="module", name="single_pair_request")
 def single_pair_request_fixture():
     return MetricsRequest(
@@ -130,7 +148,62 @@ class TestEvaluateMetricsAsync:
 
         assert data["job_id"] == "test-job-id-123"
         assert data["status"] == "PENDING"
-        assert "Job queued successfully" in data["message"]
+        assert (
+            "Job queued successfully. Use the job ID to check status and retrieve results."
+            in data["message"]
+        )
+        assert "estimated_completion_time" in data
+
+        # Verify task was called with correct parameters
+        mock_compute_task.apply_async.assert_called_once()
+        call_args = mock_compute_task.apply_async.call_args
+        assert call_args.kwargs["task_id"] == "test-job-id-123"
+
+        # Check if args are passed as positional arguments or keyword arguments
+        if call_args.args:
+            request_data = call_args.args[0]
+        else:
+            # Check if passed as keyword argument
+            request_data = call_args.kwargs.get("args", [None])[0]
+
+        assert isinstance(request_data, dict)
+        assert len(request_data["text_pairs"]) == 2
+        assert len(request_data["metrics"]) == 1
+
+    @patch("src.api.v1.metrics_async.uuid.uuid4")
+    @patch("src.api.v1.metrics_async.compute_metrics_task")
+    def test_evaluate_metrics_async_success_with_webhook(
+        self,
+        mock_compute_task,
+        mock_uuid,
+        client: TestClient,
+        valid_request_body_webhook: dict,
+    ):
+        """Test successful async metrics evaluation."""
+        # Mock UUID generation
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="test-job-id-123")
+
+        # Mock Celery task
+        mock_task = Mock()
+        mock_task.id = "test-job-id-123"
+        mock_compute_task.apply_async.return_value = mock_task
+
+        response = client.post(
+            EVALUATE_URL,
+            json=valid_request_body_webhook,
+            headers=mock_headers(),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        assert data["job_id"] == "test-job-id-123"
+        assert data["status"] == "PENDING"
+        assert (
+            "Job queued successfully. Results will be sent to webhook URL: http://www.this-is-a-fake-domain.com/results"
+            in data["message"]
+        )
         assert "estimated_completion_time" in data
 
         # Verify task was called with correct parameters

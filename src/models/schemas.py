@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 from enum import Enum
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class MetricType(str, Enum):
@@ -34,7 +34,7 @@ class MetricsRequest(BaseModel):
     batch_size: Optional[int] = Field(
         default=32, description="Batch size for processing optimization"
     )
-    webhook_url: Optional[HttpUrl] = Field(
+    webhook_url: Optional[str] = Field(
         default=None,
         description="Optional webhook URL to receive results when processing is complete",
     )

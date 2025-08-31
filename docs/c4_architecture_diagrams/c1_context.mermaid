@@ -1,0 +1,31 @@
+C4Context
+    title System Context diagram for LLM Scorecaster
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+    Enterprise_Boundary(b0, "LLM Metrics Ecosystem") {
+        Person(developer, "Developer", "A developer who needs to evaluate LLM outputs for their applications")
+        Person(analyst, "Data Analyst", "An analyst who evaluates LLM performance for model improvement and reporting")
+        Person(researcher, "ML Researcher", "A researcher comparing different LLM models and techniques")
+        
+        System(llmMetricsAPI, "LLM Scorecaster", "Provides synchronous and asynchronous evaluation of text pairs using various metrics <br/>(BERT Score, BLEU, ROUGE, etc.) with webhook support")
+    }
+    System_Ext(userWebhookService, "User Webhook Endpoint", "External service owned by API users to receive async results notifications")
+    System_Ext(celeryBroker, "Message Broker", "Redis or RabbitMQ system for managing asynchronous task queues")
+    
+    Rel(developer, llmMetricsAPI, "Evaluates LLM outputs", "HTTPS/API")
+    Rel(analyst, llmMetricsAPI, "Analyzes model performance", "HTTPS/API")
+    Rel(researcher, llmMetricsAPI, "Compares models and techniques", "HTTPS/API")
+    Rel(llmMetricsAPI, userWebhookService, "Sends async results to", "HTTPS/Webhook")
+    Rel(llmMetricsAPI, celeryBroker, "Queues async tasks using", "Redis/RabbitMQ Protocol")
+    
+    UpdateElementStyle(llmMetricsAPI, $bgColor="#1168bd", $fontColor="#ffffff")
+    UpdateElementStyle(userWebhookService, $bgColor="#999999")
+    UpdateElementStyle(celeryBroker, $bgColor="#D93A2C", $fontColor="#ffffff")
+    UpdateElementStyle(developer, $bgColor="#08427b")
+    UpdateElementStyle(analyst, $bgColor="#08427b")
+    UpdateElementStyle(researcher, $bgColor="#08427b")
+    
+    UpdateRelStyle(developer, llmMetricsAPI, $lineColor="blue", $textColor="blue")
+    UpdateRelStyle(analyst, llmMetricsAPI, $lineColor="green", $textColor="green")
+    UpdateRelStyle(researcher, llmMetricsAPI, $lineColor="purple", $textColor="purple")
+    UpdateRelStyle(llmMetricsAPI, userWebhookService, $lineColor="orange", $textColor="orange")
+    UpdateRelStyle(llmMetricsAPI, celeryBroker, $lineColor="red", $textColor="red")

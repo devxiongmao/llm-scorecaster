@@ -28,11 +28,14 @@ async def evaluate_metrics_async(
     Asynchronously evaluate metrics for the provided text pairs.
 
     This endpoint queues a metrics computation job and returns immediately
-    with a job ID. Use the job ID with the /jobs endpoints to check status
-    and retrieve results when complete.
+    with a job ID.
+
+    If a webhook_url is provided in the request, results will be POST'd to that URL
+    when processing is complete. Otherwise, use the job ID with the /jobs endpoints
+    to check status and retrieve results when complete.
 
     Args:
-        request: The metrics request containing text pairs and requested metrics
+        request: The metrics request containing text pairs, requested metrics, and optional webhook URL
 
     Returns:
         AsyncJobResponse containing the job ID and status information
@@ -54,10 +57,16 @@ async def evaluate_metrics_async(
                 detail="Failed to submit task to queue",
             )
 
+        # Update the response message based on whether webhook is configured
+        if request.webhook_url:
+            message = f"Job queued successfully. Results will be sent to webhook URL: {request.webhook_url}"
+        else:
+            message = "Job queued successfully. Use the job ID to check status and retrieve results."
+
         return AsyncJobResponse(
             job_id=job_id,
             status="PENDING",
-            message="Job queued successfully. Use the job ID to check status and retrieve results.",
+            message=message,
             estimated_completion_time=len(request.text_pairs)
             * len(request.metrics)
             * 0.5,  # Rough estimate in seconds

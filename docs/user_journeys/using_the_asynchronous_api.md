@@ -24,9 +24,9 @@ The user has an application that generates large volumes of LLM responses and wa
 
 2. **Batch Job Submission**
 
-   - Constructs POST request to `/api/v1/metrics/evaluate-async`
+   - Constructs POST request to `/api/v1/async/evaluate`
    - Includes Authorization header with organization's API key: `Bearer org-analytics-key`
-   - Formats large request body with text pairs and multiple metrics: `["bert_score", "bleu", "rouge", ...]`
+   - Formats large request body with text pairs and multiple metrics: `["bert_score", "bleu_score", "rouge_score", ...]`
 
 3. **Job Initialization**
 
@@ -64,7 +64,6 @@ The user has an application that generates large volumes of LLM responses and wa
 
 ## Pain Points
 
-- Uncertainty about how long different sized jobs will take to process
 - Need to implement polling logic to check job completion status
 - Managing multiple concurrent jobs and their respective job IDs
 - Handling job failures or timeouts gracefully in batch processing workflows
@@ -73,9 +72,7 @@ The user has an application that generates large volumes of LLM responses and wa
 
 ## Opportunities
 
-- Provide job processing time estimates based on batch size and selected metrics
 - Add webhook support for job completion notifications instead of polling
-- Include progress indicators showing percentage completion for long-running jobs
 - Offer job priority queuing for urgent vs. routine batch analyses
 - Provide batch size recommendations for optimal processing efficiency
 

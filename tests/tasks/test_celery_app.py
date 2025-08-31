@@ -803,22 +803,27 @@ class TestWebhookFunctionality:
         mock_task.update_state = Mock()
         mock_task.request.id = "test-job-webhook-exception"
 
-        with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
-            with patch("asyncio.new_event_loop") as mock_loop_constructor:
-                with patch("asyncio.set_event_loop"):
-                    mock_loop = Mock()
-                    mock_loop_constructor.return_value = mock_loop
-                    mock_loop.run_until_complete.side_effect = Exception(
-                        "Webhook connection error"
-                    )
+        # Mock logger to avoid time.time() conflicts
+        with patch("src.tasks.celery_app.logger") as mock_logger:
+            with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
+                with patch("asyncio.new_event_loop") as mock_loop_constructor:
+                    with patch("asyncio.set_event_loop"):
+                        mock_loop = Mock()
+                        mock_loop_constructor.return_value = mock_loop
+                        mock_loop.run_until_complete.side_effect = Exception(
+                            "Webhook connection error"
+                        )
 
-                    result = _compute_metrics_task_logic(
-                        mock_task, webhook_request_data
-                    )
+                        result = _compute_metrics_task_logic(
+                            mock_task, webhook_request_data
+                        )
 
-        # Verify webhook exception was handled
-        assert result["webhook_sent"] is False
-        assert result["webhook_error"] == "Webhook connection error"
+            # Verify webhook exception was handled
+            assert result["webhook_sent"] is False
+            assert result["webhook_error"] == "Webhook connection error"
+
+            # Verify logger was called for the webhook error
+            mock_logger.error.assert_called_once()
 
     @patch("src.tasks.celery_app.metric_registry")
     def test_compute_metrics_task_without_webhook(

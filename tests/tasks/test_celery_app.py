@@ -1,5 +1,7 @@
-from unittest.mock import patch, Mock
+import asyncio
+from unittest.mock import patch, Mock, AsyncMock
 from typing import Dict, Any
+import httpx
 from pydantic import ValidationError
 import pytest
 
@@ -8,6 +10,7 @@ from src.tasks.celery_app import (
     health_check_task,
     compute_metrics_for_request,
     celery_app,
+    send_webhook_notification,
 )
 
 
@@ -52,6 +55,22 @@ def empty_request_data_fixture():
         "text_pairs": [],
         "metrics": [],
         "batch_size": 32,
+    }
+
+
+@pytest.fixture(name="webhook_request_data")
+def webhook_request_data_fixture():
+    """Request data with webhook URL for testing."""
+    return {
+        "text_pairs": [
+            {
+                "reference": "The quick brown fox jumps over the lazy dog.",
+                "candidate": "A swift auburn fox leaps over a sleepy canine.",
+            }
+        ],
+        "metrics": ["bert_score"],
+        "batch_size": 32,
+        "webhook_url": "https://example.com/webhook",
     }
 
 
@@ -568,3 +587,359 @@ class TestIntegrationScenarios:
         # Verify each metric was computed for each pair
         assert mock_bert.compute_single.call_count == 2
         assert mock_bleu.compute_single.call_count == 2
+
+
+class TestWebhookFunctionality:
+    """Tests for webhook notification functionality."""
+
+    @pytest.mark.asyncio
+    async def test_send_webhook_notification_success(self):
+        """Test successful webhook notification."""
+
+        job_id = "test-job-123"
+        webhook_url = "https://example.com/webhook"
+        result_data = {
+            "success": True,
+            "message": "Test completed",
+            "results": [],
+            "processing_time_seconds": 1.5,
+        }
+
+        # Mock httpx client
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = "OK"
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await send_webhook_notification(webhook_url, job_id, result_data)
+
+            assert result is True
+
+            # Verify the POST call was made with correct data
+            mock_post = mock_client.return_value.__aenter__.return_value.post
+            mock_post.assert_called_once()
+
+            call_args = mock_post.call_args
+            assert call_args[0][0] == webhook_url
+            assert call_args[1]["headers"]["Content-Type"] == "application/json"
+
+            # Verify payload structure
+            payload = call_args[1]["json"]
+            assert payload["job_id"] == job_id
+            assert payload["status"] == "COMPLETED"
+            assert "timestamp" in payload
+            assert payload["data"] == result_data
+
+    @pytest.mark.asyncio
+    async def test_send_webhook_notification_failure_status(self):
+        """Test webhook notification with failure status."""
+
+        job_id = "test-job-456"
+        webhook_url = "https://example.com/webhook"
+        result_data = {
+            "success": False,
+            "error": "Test error",
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await send_webhook_notification(webhook_url, job_id, result_data)
+
+            assert result is True
+
+            # Verify payload has FAILED status
+            mock_post = mock_client.return_value.__aenter__.return_value.post
+            payload = mock_post.call_args[1]["json"]
+            assert payload["status"] == "FAILED"
+
+    @pytest.mark.asyncio
+    async def test_send_webhook_notification_http_error(self):
+        """Test webhook notification with HTTP error response."""
+
+        job_id = "test-job-789"
+        webhook_url = "https://example.com/webhook"
+        result_data = {"success": True}
+
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.text = "Internal Server Error"
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await send_webhook_notification(
+                webhook_url, job_id, result_data, max_retries=1
+            )
+
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_send_webhook_notification_timeout(self):
+        """Test webhook notification with timeout."""
+
+        job_id = "test-job-timeout"
+        webhook_url = "https://example.com/webhook"
+        result_data = {"success": True}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                side_effect=httpx.TimeoutException("Request timed out")
+            )
+
+            result = await send_webhook_notification(
+                webhook_url, job_id, result_data, max_retries=1
+            )
+
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_send_webhook_notification_retries(self):
+        """Test webhook notification retry mechanism."""
+
+        job_id = "test-job-retry"
+        webhook_url = "https://example.com/webhook"
+        result_data = {"success": True}
+
+        # First call fails, second succeeds
+        mock_responses = [
+            Mock(status_code=500, text="Server Error"),
+            Mock(status_code=200, text="OK"),
+        ]
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                side_effect=mock_responses
+            )
+
+            with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+                result = await send_webhook_notification(
+                    webhook_url, job_id, result_data, max_retries=2
+                )
+
+                assert result is True
+                # Verify sleep was called for retry backoff
+                mock_sleep.assert_called_once()
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_with_webhook_success(
+        self, mock_registry, webhook_request_data, mock_metric_instance
+    ):
+        """Test compute_metrics_task with successful webhook delivery."""
+        mock_registry.discover_metrics.return_value = None
+        mock_registry.get_metrics.return_value = {"bert_score": mock_metric_instance}
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+        mock_task.request.id = "test-job-webhook"
+
+        with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
+            with patch("asyncio.new_event_loop") as mock_loop_constructor:
+                with patch("asyncio.set_event_loop") as mock_set_loop:
+                    mock_loop = Mock()
+                    mock_loop_constructor.return_value = mock_loop
+                    mock_loop.run_until_complete.return_value = True  # Webhook success
+
+                    result = _compute_metrics_task_logic(
+                        mock_task, webhook_request_data
+                    )
+
+        # Verify webhook was attempted
+        assert result["webhook_sent"] is True
+        assert "webhook_error" not in result
+
+        # Verify loop management
+        mock_loop_constructor.assert_called_once()
+        mock_set_loop.assert_called_once_with(mock_loop)
+        mock_loop.close.assert_called_once()
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_with_webhook_failure(
+        self, mock_registry, webhook_request_data, mock_metric_instance
+    ):
+        """Test compute_metrics_task with failed webhook delivery."""
+        mock_registry.discover_metrics.return_value = None
+        mock_registry.get_metrics.return_value = {"bert_score": mock_metric_instance}
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+        mock_task.request.id = "test-job-webhook-fail"
+
+        with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
+            with patch("asyncio.new_event_loop") as mock_loop_constructor:
+                with patch("asyncio.set_event_loop"):
+                    mock_loop = Mock()
+                    mock_loop_constructor.return_value = mock_loop
+                    mock_loop.run_until_complete.return_value = False  # Webhook failure
+
+                    result = _compute_metrics_task_logic(
+                        mock_task, webhook_request_data
+                    )
+
+        # Verify webhook failure was recorded
+        assert result["webhook_sent"] is False
+        assert "webhook_error" not in result  # No exception, just failed delivery
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_with_webhook_exception(
+        self, mock_registry, webhook_request_data, mock_metric_instance
+    ):
+        """Test compute_metrics_task with webhook exception."""
+        mock_registry.discover_metrics.return_value = None
+        mock_registry.get_metrics.return_value = {"bert_score": mock_metric_instance}
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+        mock_task.request.id = "test-job-webhook-exception"
+
+        with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
+            with patch("asyncio.new_event_loop") as mock_loop_constructor:
+                with patch("asyncio.set_event_loop"):
+                    mock_loop = Mock()
+                    mock_loop_constructor.return_value = mock_loop
+                    mock_loop.run_until_complete.side_effect = Exception(
+                        "Webhook connection error"
+                    )
+
+                    result = _compute_metrics_task_logic(
+                        mock_task, webhook_request_data
+                    )
+
+        # Verify webhook exception was handled
+        assert result["webhook_sent"] is False
+        assert result["webhook_error"] == "Webhook connection error"
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_without_webhook(
+        self, mock_registry, sample_request_data, mock_metric_instance
+    ):
+        """Test compute_metrics_task without webhook URL (normal flow)."""
+        mock_registry.discover_metrics.return_value = None
+        mock_registry.get_metrics.return_value = {"bert_score": mock_metric_instance}
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+
+        with patch("src.tasks.celery_app.time.time", side_effect=[1000.0, 1002.0]):
+            result = _compute_metrics_task_logic(mock_task, sample_request_data)
+
+        # Verify no webhook fields in result
+        assert "webhook_sent" not in result
+        assert "webhook_error" not in result
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_error_with_webhook(
+        self, mock_registry, webhook_request_data
+    ):
+        """Test compute_metrics_task error handling with webhook notification."""
+        mock_registry.discover_metrics.side_effect = ValueError("Registry error")
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+        mock_task.request.id = "test-job-error-webhook"
+
+        with patch("asyncio.new_event_loop") as mock_loop_constructor:
+            with patch("asyncio.set_event_loop") as mock_set_loop:
+                mock_loop = Mock()
+                mock_loop_constructor.return_value = mock_loop
+                mock_loop.run_until_complete.return_value = True
+
+                with pytest.raises(ValueError, match="Registry error"):
+                    _compute_metrics_task_logic(mock_task, webhook_request_data)
+
+        # Verify error webhook was attempted
+        mock_loop.run_until_complete.assert_called_once()
+        mock_loop_constructor.assert_called_once()
+        mock_set_loop.assert_called_once_with(mock_loop)
+
+    @patch("src.tasks.celery_app.metric_registry")
+    def test_compute_metrics_task_error_with_webhook_exception(
+        self, mock_registry, webhook_request_data
+    ):
+        """Test compute_metrics_task error handling with webhook exception."""
+        mock_registry.discover_metrics.side_effect = ValueError("Registry error")
+
+        mock_task = Mock()
+        mock_task.update_state = Mock()
+        mock_task.request.id = "test-job-error-webhook-fail"
+
+        with patch("asyncio.new_event_loop") as mock_loop_constructor:
+            mock_loop = Mock()
+            mock_loop_constructor.return_value = mock_loop
+            mock_loop.run_until_complete.side_effect = Exception("Error webhook failed")
+
+            # Should still raise the original error, not the webhook error
+            with pytest.raises(ValueError, match="Registry error"):
+                _compute_metrics_task_logic(mock_task, webhook_request_data)
+
+    def test_webhook_payload_structure_success(self):
+        """Test the structure of webhook payload for successful job."""
+
+        job_id = "test-job-payload"
+        webhook_url = "https://example.com/webhook"
+        result_data = {
+            "success": True,
+            "message": "Job completed",
+            "results": [{"metric": "score"}],
+            "processing_time_seconds": 2.5,
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            asyncio.run(send_webhook_notification(webhook_url, job_id, result_data))
+
+            # Verify payload structure
+            mock_post = mock_client.return_value.__aenter__.return_value.post
+            payload = mock_post.call_args[1]["json"]
+
+            assert payload["job_id"] == job_id
+            assert payload["status"] == "COMPLETED"
+            assert payload["data"] == result_data
+
+    def test_webhook_payload_structure_failure(self):
+        """Test the structure of webhook payload for failed job."""
+
+        job_id = "test-job-payload-fail"
+        webhook_url = "https://example.com/webhook"
+        result_data = {
+            "success": False,
+            "error": "Job failed",
+            "exc_type": "ValueError",
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            with patch("time.time", return_value=9876543210.456):
+                asyncio.run(send_webhook_notification(webhook_url, job_id, result_data))
+
+            # Verify payload structure
+            mock_post = mock_client.return_value.__aenter__.return_value.post
+            payload = mock_post.call_args[1]["json"]
+
+            assert payload["job_id"] == job_id
+            assert payload["status"] == "FAILED"
+            assert payload["timestamp"] == 9876543210.456
+            assert payload["data"] == result_data

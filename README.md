@@ -98,6 +98,9 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 4. **Start Redis (required for async processing):**
 
    ```bash
+   # Using the Makefile
+   make redis-start
+
    # Using Docker (Coming Soon)
    docker run -d -p 6379:6379 redis:alpine
 
@@ -108,9 +111,6 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 
 5. **Run the API server:**
    ```bash
-   # In one terminal
-   make redis-start
-
    # In one terminal
    make dev
 
@@ -203,7 +203,7 @@ curl -X POST "http://localhost:8000/api/v1/metrics/evaluate" \
 
 ### Asynchronous Evaluation
 
-Users also have the option of using an async version of the API along with polling to check the status of the results. Notice the change in URL.
+Users also have the option of using an async version of the API. The async implementation offers webhook support for automatic posting of results. If your application doesn't support webhooks, a polling option has also been created to check the status of the results (simply omit the webhook_url param in the below request to use this version). Notice the change in URL.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/async/evaluate" \
@@ -221,7 +221,8 @@ curl -X POST "http://localhost:8000/api/v1/async/evaluate" \
       }
     ],
     "metrics": ["bert_score", "bleu_score", "rouge_score"],
-    "batch_size": 32
+    "batch_size": 32,
+    "webhook_url": "http://localhost:3000/test-llm",
   }'
 ```
 
@@ -231,14 +232,14 @@ The response from this request is:
 {
   "job_id":"b43339ba-35a9-4d15-9700-e0cd85f0b001",
   "status":"PENDING",
-  "message":"Job queued successfully. Use the job ID to check status and retrieve results.",
+  "message":"Job queued successfully. Results will be sent to webhook URL: http://localhost:3000/test-llm",
   "estimated_completion_time":3.0
 }
 ```
 
 ### Managing Async Jobs
 
-Taking the returned `job_id` from a `/api/v1/async/evaluate` request, users can query a status endpoint for the status of their results.
+Taking the returned `job_id` from a `/api/v1/async/evaluate` request, users can query a status endpoint for the status of their results. 
 
 ```bash
 curl -X GET "http://localhot:8000/api/v1/jobs/status/b43339ba-35a9-4d15-9700-e0cd85f0b001" \
@@ -506,17 +507,17 @@ class BleuMetric(BaseMetric):
 The registry will automatically discover it on the next discover_metrics() call!
 
 - Zero configuration: Just create metric files, they're automatically discovered
-- Type safety: Everything uses your Pydantic models
+- Type safety: Everything uses Pydantic models
 - Extensible: Add new metrics without changing existing code
 - Error resilient: Failed metrics don't break the whole request
 - Progress tracking: Monitor long-running computations
 
 ## Development Status
 
-🟢 **Ready**: Synchronous API with placeholder metrics
+🟢 **Ready**: Synchronous API
 🟢 **Ready**: BERT, BLEU and ROUGE metric implementation
-🟡 **In Progress**: Asynchronous API, Celery workers
-🔴 **Planned**: Webhook API, post your results back when ready
+🟢 **Ready**: Asynchronous API, Celery workers
+🟢 **Ready**: Webhook support, post your results back when ready
 🔴 **Planned**: Dockerize the app
 
 ## Contributing

@@ -8,14 +8,22 @@ for handling asynchronous metric computation tasks.
 import asyncio
 import time
 import logging
+import sys
 from typing import List, Dict, Any
 import httpx
 
-from celery import Celery
+from celery import Celery, signals
 
 from src.core.metrics.registry import metric_registry
 from src.models.schemas import TextPair, MetricsRequest, TextPairResult
 from src.core.settings import settings
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+    force=True,  # This forces reconfiguration of the root logger
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +55,57 @@ celery_app.conf.update(
     task_default_retry_delay=60,
     task_max_retries=3,
 )
+
+
+@signals.setup_logging.connect
+def setup_celery_logging(**_kwargs):
+    """Override Celery's logging setup to prevent interference."""
+
+
+@signals.task_prerun.connect
+def task_prerun_handler(task, **_kwargs):
+    if task.request.headers is None:
+        task.request.headers = {}
+    task.request.headers["started_at"] = time.time()
+    logger.info("Task Started - Task ID: %s, Task Name: %s", task.request.id, task.name)
+
+
+@signals.task_success.connect
+def task_success_handler(sender, **_kwargs):
+    started_at = sender.request.headers.get("started_at")
+    duration = time.time() - started_at if started_at else None
+    logger.info(
+        "Task Completed - Task ID: %s, Task Name: %s, Duration: %.3fs",
+        sender.request.id,
+        sender.name,
+        duration or 0,
+    )
+
+
+@signals.task_retry.connect
+def task_retry_handler(sender, reason, **_kwargs):
+    started_at = sender.request.headers.get("started_at")
+    duration = time.time() - started_at if started_at else None
+    logger.error(
+        "Task Retry - Task ID: %s, Task Name: %s, Reason: %s, Duration: %.3fs",
+        sender.request.id,
+        sender.name,
+        str(reason),
+        duration or 0,
+    )
+
+
+@signals.task_failure.connect
+def task_failure_handler(sender, exception, _traceback, **_kwargs):
+    started_at = sender.request.headers.get("started_at")
+    duration = time.time() - started_at if started_at else None
+    logger.error(
+        "Task Failed - Task ID: %s, Task Name: %s, Exception: %s, Duration: %.3fs",
+        sender.request.id,
+        sender.name,
+        str(exception),
+        duration or 0,
+    )
 
 
 def compute_metrics_for_request(request_data: Dict[str, Any]) -> List[Dict[str, Any]]:

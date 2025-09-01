@@ -93,6 +93,9 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
    ```bash
    API_KEY=your-secret-api-key-here
    REDIS_URL=redis://localhost:6379
+
+   # Or, if using docker
+   REDIS_URL=redis://redis:6379
    ```
 
 4. **Start Using Docker:**

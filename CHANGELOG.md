@@ -1,7 +1,8 @@
 ## Changelog
-### From v0.0.6 to HEAD
+### From v0.0.7 to HEAD
 
-- Bump pyright from 1.1.403 to 1.1.404 (#25) (8bd1c7e) by dependabot[bot]
-- XMDEV-484: Adds initial version of async implementation (#33) (528f1fc) by Jon
-- Bump pydantic from 2.10.6 to 2.11.7 (#14) (c763a0c) by dependabot[bot]
+- XMDEV-489: Adds dockerization of the application (#38) (02d4ccf) by Jon
+- XMDEV-485: Adds webhook support for async processing (#37) (b1bbf1b) by Jon
+- XMDEV-503: Adds C4 Architecture diagrams (#36) (4205609) by Jon
+- XMDEV-504: Adds user journey for webhook implementation (#35) (f9d74de) by Jon
 

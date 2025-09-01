@@ -57,7 +57,6 @@ async def evaluate_metrics_async(
                 detail="Failed to submit task to queue",
             )
 
-        # Update the response message based on whether webhook is configured
         if request.webhook_url:
             message = f"Job queued successfully. Results will be sent to webhook URL: {request.webhook_url}"
         else:

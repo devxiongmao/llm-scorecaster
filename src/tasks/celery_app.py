@@ -95,8 +95,6 @@ async def send_webhook_notification(
     webhook_url: str,
     job_id: str,
     result_data: Dict[str, Any],
-    max_retries: int = 3,
-    timeout: int = 30,
 ) -> bool:
     """
     Send webhook notification with results.
@@ -105,8 +103,6 @@ async def send_webhook_notification(
         webhook_url: The URL to send the webhook to
         job_id: The job ID for reference
         result_data: The computed results to send
-        max_retries: Maximum number of retry attempts
-        timeout: Request timeout in seconds
 
     Returns:
         bool: True if successful, False otherwise
@@ -118,9 +114,9 @@ async def send_webhook_notification(
         "data": result_data,
     }
 
-    for attempt in range(max_retries + 1):
+    for attempt in range(settings.max_retries + 1):
         try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
+            async with httpx.AsyncClient(timeout=settings.max_timeout) as client:
                 response = await client.post(
                     webhook_url,
                     json=webhook_payload,
@@ -153,7 +149,7 @@ async def send_webhook_notification(
                 "Webhook attempt %d failed for job %s: %s", attempt + 1, job_id, str(e)
             )
 
-        if attempt < max_retries:
+        if attempt < settings.max_retries:
             await asyncio.sleep(2**attempt)  # Exponential backoff
 
     logger.error("All webhook attempts failed for job %s", job_id)

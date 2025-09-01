@@ -514,11 +514,11 @@ The registry will automatically discover it on the next discover_metrics() call!
 
 ## Development Status
 
-🟢 **Ready**: Synchronous API
-🟢 **Ready**: BERT, BLEU and ROUGE metric implementation
-🟢 **Ready**: Asynchronous API, Celery workers
-🟢 **Ready**: Webhook support, post your results back when ready
-🔴 **Planned**: Dockerize the app
+- 🟢 **Ready**: Synchronous API
+- 🟢 **Ready**: BERT, BLEU and ROUGE metric implementation 
+- 🟢 **Ready**: Asynchronous API, Celery workers 
+- 🟢 **Ready**: Webhook support, post your results back when ready 
+- 🔴 **Planned**: Dockerize the app
 
 ## Contributing
 

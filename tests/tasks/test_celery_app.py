@@ -680,7 +680,9 @@ class TestWebhookFunctionality:
             )
 
             result = await send_webhook_notification(
-                webhook_url, job_id, result_data, max_retries=1
+                webhook_url,
+                job_id,
+                result_data,
             )
 
             assert result is False
@@ -698,9 +700,7 @@ class TestWebhookFunctionality:
                 side_effect=httpx.TimeoutException("Request timed out")
             )
 
-            result = await send_webhook_notification(
-                webhook_url, job_id, result_data, max_retries=1
-            )
+            result = await send_webhook_notification(webhook_url, job_id, result_data)
 
             assert result is False
 
@@ -725,7 +725,7 @@ class TestWebhookFunctionality:
 
             with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
                 result = await send_webhook_notification(
-                    webhook_url, job_id, result_data, max_retries=2
+                    webhook_url, job_id, result_data
                 )
 
                 assert result is True

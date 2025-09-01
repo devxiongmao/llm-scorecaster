@@ -34,6 +34,10 @@ class MetricsRequest(BaseModel):
     batch_size: Optional[int] = Field(
         default=32, description="Batch size for processing optimization"
     )
+    webhook_url: Optional[str] = Field(
+        default=None,
+        description="Optional webhook URL to receive results when processing is complete",
+    )
 
 
 class MetricResult(BaseModel):

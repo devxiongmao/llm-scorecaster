@@ -5,14 +5,19 @@ This module configures Celery with Redis as both broker and result backend
 for handling asynchronous metric computation tasks.
 """
 
+import asyncio
 import time
+import logging
 from typing import List, Dict, Any
+import httpx
 
 from celery import Celery
 
 from src.core.metrics.registry import metric_registry
 from src.models.schemas import TextPair, MetricsRequest, TextPairResult
 from src.core.settings import settings
+
+logger = logging.getLogger(__name__)
 
 # Create Celery app
 celery_app = Celery(
@@ -86,6 +91,71 @@ def compute_metrics_for_request(request_data: Dict[str, Any]) -> List[Dict[str, 
     return results
 
 
+async def send_webhook_notification(
+    webhook_url: str,
+    job_id: str,
+    result_data: Dict[str, Any],
+) -> bool:
+    """
+    Send webhook notification with results.
+
+    Args:
+        webhook_url: The URL to send the webhook to
+        job_id: The job ID for reference
+        result_data: The computed results to send
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    webhook_payload = {
+        "job_id": job_id,
+        "status": "COMPLETED" if result_data.get("success") else "FAILED",
+        "timestamp": time.time(),
+        "data": result_data,
+    }
+
+    for attempt in range(settings.max_retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=settings.max_timeout) as client:
+                response = await client.post(
+                    webhook_url,
+                    json=webhook_payload,
+                    headers={"Content-Type": "application/json"},
+                )
+
+                if response.status_code in [200, 201, 202, 204]:
+
+                    logger.info(
+                        "Webhook sent successfully for job %s to %s",
+                        job_id,
+                        webhook_url,
+                    )
+                    return True
+
+                logger.warning(
+                    "Webhook attempt %d failed for job %s: HTTP %d - %s",
+                    attempt + 1,
+                    job_id,
+                    response.status_code,
+                    response.text,
+                )
+
+        except httpx.TimeoutException:
+            logger.warning(
+                "Webhook attempt %d timed out for job %s", attempt + 1, job_id
+            )
+        except Exception as e:
+            logger.warning(
+                "Webhook attempt %d failed for job %s: %s", attempt + 1, job_id, str(e)
+            )
+
+        if attempt < settings.max_retries:
+            await asyncio.sleep(2**attempt)  # Exponential backoff
+
+    logger.error("All webhook attempts failed for job %s", job_id)
+    return False
+
+
 def _compute_metrics_task_logic(self, request_data):
     try:
         start_time = time.time()
@@ -123,13 +193,41 @@ def _compute_metrics_task_logic(self, request_data):
         processing_time = time.time() - start_time
 
         # Final result
-        return {
+        final_result = {
             "success": True,
             "message": f"Successfully calculated {len(request_data.get('metrics', []))} metrics for {len(request_data.get('text_pairs', []))} text pairs",
             "results": results,
             "processing_time_seconds": round(processing_time, 3),
             "total_operations": total_operations,
         }
+
+        # Send webhook notification if webhook_url is provided
+        webhook_url = request_data.get("webhook_url")
+        if webhook_url:
+            try:
+                # Run the webhook notification asynchronously
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                webhook_success = loop.run_until_complete(
+                    send_webhook_notification(
+                        str(webhook_url), self.request.id, final_result
+                    )
+                )
+                loop.close()
+
+                # Add webhook status to the result
+                final_result["webhook_sent"] = webhook_success
+
+            except Exception as webhook_error:
+                logger.error(
+                    "Failed to send webhook for job %s: %s",
+                    self.request.id,
+                    str(webhook_error),
+                )
+                final_result["webhook_sent"] = False
+                final_result["webhook_error"] = str(webhook_error)
+
+        return final_result
 
     except Exception as exc:
         # Log the error (you might want to use proper logging here)
@@ -144,6 +242,33 @@ def _compute_metrics_task_logic(self, request_data):
                 "exc_message": str(exc),
             },
         )
+
+        # Send webhook notification for failed job if webhook_url is provided
+        webhook_url = request_data.get("webhook_url")
+        if webhook_url:
+            try:
+                error_result = {
+                    "success": False,
+                    "error": error_message,
+                    "exc_type": type(exc).__name__,
+                    "exc_message": str(exc),
+                }
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(
+                    send_webhook_notification(
+                        str(webhook_url), self.request.id, error_result
+                    )
+                )
+                loop.close()
+
+            except Exception as webhook_error:
+                logger.error(
+                    "Failed to send error webhook for job %s: %s",
+                    self.request.id,
+                    str(webhook_error),
+                )
 
         # Re-raise the exception so Celery can handle it properly
         raise exc

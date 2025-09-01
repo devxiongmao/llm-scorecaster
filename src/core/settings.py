@@ -42,5 +42,13 @@ class Settings(BaseSettings):
     )
     debug: bool = Field(default=False, description="Enable debug mode for development")
 
+    # Webhook settings
+    max_timeout: int = Field(
+        default=30, description="Request timeout in seconds for the webhook POST"
+    )
+    max_retries: int = Field(
+        default=3, description="Maximum number of retry attempts for the webhook"
+    )
+
 
 settings = Settings()

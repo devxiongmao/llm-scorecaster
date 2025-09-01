@@ -95,22 +95,16 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
    REDIS_URL=redis://localhost:6379
    ```
 
-4. **Start Redis (required for async processing):**
+4. **Start Using Docker:**
 
    ```bash
-   # Using the Makefile
+   make docker-dev
+
+5. **Start Without Docker:**
+   ```bash
+   # Ensure redis is running
    make redis-start
-
-   # Using Docker (Coming Soon)
-   docker run -d -p 6379:6379 redis:alpine
-
-   # Or install locally (macOS)
-   brew install redis
-   brew services start redis
-   ```
-
-5. **Run the API server:**
-   ```bash
+   
    # In one terminal
    make dev
 
@@ -518,7 +512,7 @@ The registry will automatically discover it on the next discover_metrics() call!
 - 🟢 **Ready**: BERT, BLEU and ROUGE metric implementation 
 - 🟢 **Ready**: Asynchronous API, Celery workers 
 - 🟢 **Ready**: Webhook support, post your results back when ready 
-- 🔴 **Planned**: Dockerize the app
+- 🟢 **Ready**: Dockerize the app
 
 ## Contributing
 

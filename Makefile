@@ -7,13 +7,17 @@ init:
 install: 
 	poetry install --no-root
 
+.PHONY: docker-dev
+docker-dev:
+	docker compose up
+
 .PHONY: dev
 dev:
 	poetry run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 .PHONY: worker
 worker:
-	poetry run celery -A src.tasks.celery_app worker --loglevel=info --concurrency=4
+	poetry run celery -A src.tasks.celery_app worker --loglevel=info --concurrency=2
 
 .PHONY: redis-start
 redis-start:

@@ -19,7 +19,7 @@ ENV PYTHONPATH="." \
 # Copy dependency files first to leverage Docker layer caching
 COPY pyproject.toml poetry.lock ./
 
-# Install dependencies with GPU support
+# Install dependencies
 # Use Buildkit mount cache to speed up dependency installation
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
     poetry install --extras "all" --no-root
@@ -43,7 +43,7 @@ RUN apt-get update && \
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
-# Copy virtual environment & Hugging Face cache from builder stage
+# Copy virtual environment from builder stage
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 COPY . /app

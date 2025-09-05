@@ -1,3 +1,5 @@
+"""Tests for the BaseMetric class."""
+
 from unittest.mock import Mock
 import pytest
 

@@ -1,3 +1,5 @@
+"""Tests for the metrics async endpoints."""
+
 from dataclasses import dataclass
 from unittest.mock import patch, Mock
 import pytest
@@ -426,7 +428,6 @@ class TestEvaluateMetricsAsync:
         test_case: AuthTestCase,
         valid_request_body: dict,
     ):
-
         mock_task = Mock()
         mock_compute_task.apply_async.return_value = mock_task
 

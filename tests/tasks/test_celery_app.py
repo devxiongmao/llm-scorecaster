@@ -1,3 +1,5 @@
+"""Tests for the Celery tasks."""
+
 import asyncio
 from unittest.mock import patch, Mock, AsyncMock
 from typing import Dict, Any

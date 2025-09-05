@@ -1,3 +1,5 @@
+"""Test utilities for the LLM Scorecaster application."""
+
 from fastapi import APIRouter, FastAPI
 
 from src.core.settings import settings

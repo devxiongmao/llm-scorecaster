@@ -1,3 +1,5 @@
+"""ROUGE Score metric implementation."""
+
 from typing import List, Dict, Any, Set, Optional
 import logging
 from src.core.metrics.base import BaseMetric

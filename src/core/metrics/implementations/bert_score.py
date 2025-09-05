@@ -1,3 +1,5 @@
+"""BERT Score metric implementation."""
+
 from typing import List, Dict, Any
 import logging
 from src.core.metrics.base import BaseMetric

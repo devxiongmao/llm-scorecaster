@@ -1,3 +1,5 @@
+"""Tests for the metrics sync endpoints."""
+
 from unittest.mock import patch
 import pytest
 from fastapi import status

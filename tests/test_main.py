@@ -1,3 +1,5 @@
+"""Tests for the main FastAPI application endpoints and functionality."""
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import BaseModel

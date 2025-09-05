@@ -1,3 +1,5 @@
+"""Tests for the authentication dependencies."""
+
 from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException, status

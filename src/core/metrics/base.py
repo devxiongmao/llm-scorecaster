@@ -1,3 +1,5 @@
+"""Abstract base class for all metrics."""
+
 from abc import ABC, abstractmethod
 from typing import List
 from src.core.metrics.metric_observer import MetricObserver

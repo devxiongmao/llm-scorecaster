@@ -1,3 +1,5 @@
+"""Tests for the MetricObserver class."""
+
 from typing import List
 import pytest
 from src.core.metrics.metric_observer import MetricObserver

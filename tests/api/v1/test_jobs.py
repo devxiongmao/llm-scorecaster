@@ -1,3 +1,5 @@
+"""Tests for the jobs endpoints."""
+
 from unittest.mock import patch, Mock
 import pytest
 from fastapi import status

@@ -1,3 +1,5 @@
+"""Tests for the ROUGE Score metric implementation."""
+
 from unittest.mock import Mock, patch
 import pytest
 

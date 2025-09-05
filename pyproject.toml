@@ -16,7 +16,7 @@ pydantic-settings = "^2.10.1"
 redis = "^6.4.0"
 celery = "^5.5.3"
 python-multipart = "^0.0.20"
-httpx =  "^0.28.1"
+httpx = "^0.28.1"
 
 # Optional dependencies for specific metrics
 bert-score = { version = "^0.3.13", optional = true }
@@ -45,7 +45,16 @@ lint = ["black", "pyright", "pylint"]
 dev = ["pytest", "pytest-asyncio", "black", "pyright", "pylint"]
 
 # Convenience extras
-all = ["bert-score", "sacrebleu", "rouge-score", "pytest", "pytest-asyncio", "black", "pyright", "pylint"]
+all = [
+  "bert-score",
+  "sacrebleu",
+  "rouge-score",
+  "pytest",
+  "pytest-asyncio",
+  "black",
+  "pyright",
+  "pylint",
+]
 
 [build-system]
 requires = ["poetry-core"]
@@ -67,7 +76,6 @@ disable = [
 
   "R0801", # duplicate-code
   "W0212", # protected-access
-  "W0231", # super-init-not-called
   "W0718", # broad-exception-caught
 ]
 

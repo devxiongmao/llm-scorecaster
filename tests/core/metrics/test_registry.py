@@ -62,6 +62,7 @@ class MockFailingMetric(BaseMetric):
     """Mock metric that fails during instantiation."""
 
     def __init__(self):
+        super().__init__()
         raise RuntimeError("Initialization failed")
 
     @property

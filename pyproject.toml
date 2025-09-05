@@ -65,7 +65,6 @@ reportMissingTypeStubs = false
 # Basic settings
 disable = [
 
-  "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "W0212", # protected-access
   "W0231", # super-init-not-called

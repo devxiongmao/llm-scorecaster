@@ -1,5 +1,6 @@
 """Tests for the BLEU Score metric implementation."""
 
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 import pytest
 
@@ -574,17 +575,21 @@ def test_different_max_n_values(max_n):
         result = bleu_metric.compute_single("reference", "candidate")
 
         assert result.details is not None
-        assert result.details["max_n"] == max_n
+        assert isinstance(result.details, dict)
+        details: Dict[str, Any] = result.details
+
+        assert details.get("max_n") == max_n
 
         # Check that we have scores for 1 to max_n
         for n in range(1, max_n + 1):
-            assert result.details.get(f"bleu_{n}") is not None
-            assert result.details[f"bleu_{n}"] > 0
+            bleu_score = details.get(f"bleu_{n}")
+            assert bleu_score is not None
+            assert bleu_score > 0
 
         # Check that we don't have scores beyond max_n
         for n in range(max_n + 1, 6):
-            if result.details.get(f"bleu_{n}") is not None:
-                assert result.details.get(f"bleu_{n}") == 0.0
+            if details.get(f"bleu_{n}") is not None:
+                assert details.get(f"bleu_{n}") == 0.0
 
 
 @pytest.mark.parametrize("smooth_method", ["exp", "floor", "add-k", "none"])

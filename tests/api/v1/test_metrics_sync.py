@@ -1,42 +1,19 @@
+"""Tests for the metrics sync endpoints."""
+
 from unittest.mock import patch
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from src.models.schemas import MetricType, MetricsRequest, TextPair
-from src.api.v1.metrics_sync import (
-    router as metrics_router,
-)
-from tests.test_utils import mock_domain_app, mock_headers
+from tests.test_utils import mock_headers
 
 EVALUATE_URL = "/evaluate"
 
 
-@pytest.fixture(name="client")
-def client_fixture():
-    with TestClient(mock_domain_app(metrics_router)) as client:
-        yield client
-
-
-@pytest.fixture(scope="module", name="valid_request_body")
-def valid_request_body_fixture():
-    return MetricsRequest(
-        text_pairs=[
-            TextPair(
-                reference="The quick brown fox jumps over the lazy dog.",
-                candidate="A swift auburn fox leaps over a sleepy canine.",
-            ),
-            TextPair(
-                reference="Hello world, how are you?",
-                candidate="Hi world, how are you doing?",
-            ),
-        ],
-        metrics=[MetricType("bert_score")],
-    ).model_dump()
-
-
 @pytest.fixture(scope="module", name="single_pair_request")
 def single_pair_request_fixture():
+    """Create a single pair request body for the metrics sync endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference="Test reference text", candidate="Test candidate text")
@@ -47,6 +24,7 @@ def single_pair_request_fixture():
 
 @pytest.fixture(scope="module", name="empty_metrics_request")
 def empty_metrics_request_fixture():
+    """Create an empty metrics request body for the metrics sync endpoints."""
     return {
         "text_pairs": [{"reference": "Test reference", "candidate": "Test candidate"}],
         "metrics": [],
@@ -55,6 +33,7 @@ def empty_metrics_request_fixture():
 
 @pytest.fixture(scope="module", name="invalid_request_body")
 def invalid_request_body_fixture():
+    """Create an invalid request body for the metrics sync endpoints."""
     return {
         "text_pairs": [
             {
@@ -66,9 +45,9 @@ def invalid_request_body_fixture():
     }
 
 
-def test_evaluate_metrics_success(client: TestClient, valid_request_body: dict):
+def test_evaluate_metrics_success(sync_client: TestClient, valid_request_body: dict):
     """Test successful metrics evaluation."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=valid_request_body,
         headers=mock_headers(),
@@ -99,9 +78,11 @@ def test_evaluate_metrics_success(client: TestClient, valid_request_body: dict):
     assert bert_metric["details"] is not None  # bert_score should have details
 
 
-def test_evaluate_metrics_single_pair(client: TestClient, single_pair_request: dict):
+def test_evaluate_metrics_single_pair(
+    sync_client: TestClient, single_pair_request: dict
+):
     """Test evaluation with single text pair."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=single_pair_request,
         headers=mock_headers(),
@@ -116,10 +97,10 @@ def test_evaluate_metrics_single_pair(client: TestClient, single_pair_request: d
 
 
 def test_evaluate_metrics_empty_metrics_list(
-    client: TestClient, empty_metrics_request: dict
+    sync_client: TestClient, empty_metrics_request: dict
 ):
     """Test evaluation with empty metrics list."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=empty_metrics_request,
         headers=mock_headers(),
@@ -129,10 +110,10 @@ def test_evaluate_metrics_empty_metrics_list(
 
 
 def test_evaluate_metrics_invalid_request_body(
-    client: TestClient, invalid_request_body: dict
+    sync_client: TestClient, invalid_request_body: dict
 ):
     """Test evaluation with invalid request body."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=invalid_request_body,
         headers=mock_headers(),
@@ -141,9 +122,9 @@ def test_evaluate_metrics_invalid_request_body(
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_evaluate_metrics_missing_request_body(client: TestClient):
+def test_evaluate_metrics_missing_request_body(sync_client: TestClient):
     """Test evaluation without request body."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         headers=mock_headers(),
     )
@@ -172,13 +153,13 @@ def test_evaluate_metrics_missing_request_body(client: TestClient):
     ],
 )
 def test_evaluate_metrics_authentication(
-    client: TestClient,
+    sync_client: TestClient,
     headers: dict[str, str],
     expected_status: int,
     valid_request_body: dict,
 ):
     """Test authentication for evaluate endpoint."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=valid_request_body,
         headers=headers,
@@ -188,13 +169,13 @@ def test_evaluate_metrics_authentication(
 
 @patch("src.api.v1.metrics_sync.compute_metrics_for_request")
 def test_evaluate_metrics_processing_time_calculation(
-    mock_generate_results, client: TestClient, valid_request_body: dict
+    mock_generate_results, sync_client: TestClient, valid_request_body: dict
 ):
     """Test that processing time is calculated correctly."""
     # Mock the placeholder results to return quickly
     mock_generate_results.return_value = []
 
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=valid_request_body,
         headers=mock_headers(),
@@ -211,13 +192,13 @@ def test_evaluate_metrics_processing_time_calculation(
 
 @patch("src.api.v1.metrics_sync.compute_metrics_for_request")
 def test_evaluate_metrics_exception_handling(
-    mock_generate_results, client: TestClient, valid_request_body: dict
+    mock_generate_results, sync_client: TestClient, valid_request_body: dict
 ):
     """Test exception handling in evaluate endpoint."""
     # Make the function raise an exception
     mock_generate_results.side_effect = Exception("Test error")
 
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=valid_request_body,
         headers=mock_headers(),
@@ -230,7 +211,7 @@ def test_evaluate_metrics_exception_handling(
 
 
 # To-do: Readd the metrics
-def test_evaluate_metrics_different_metric_types(client: TestClient):
+def test_evaluate_metrics_different_metric_types(sync_client: TestClient):
     """Test evaluation with different metric types."""
     request_body = MetricsRequest(
         text_pairs=[TextPair(reference="Test reference", candidate="Test candidate")],
@@ -241,7 +222,7 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
         ],
     ).model_dump()
 
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=request_body,
         headers=mock_headers(),
@@ -270,10 +251,10 @@ def test_evaluate_metrics_different_metric_types(client: TestClient):
 
 
 def test_evaluate_metrics_response_message_content(
-    client: TestClient, valid_request_body: dict
+    sync_client: TestClient, valid_request_body: dict
 ):
     """Test that response message contains correct information."""
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=valid_request_body,
         headers=mock_headers(),
@@ -286,7 +267,7 @@ def test_evaluate_metrics_response_message_content(
     assert data["message"] == expected_message
 
 
-def test_evaluate_metrics_pair_index_assignment(client: TestClient):
+def test_evaluate_metrics_pair_index_assignment(sync_client: TestClient):
     """Test that pair indices are assigned correctly."""
     request_body = MetricsRequest(
         text_pairs=[
@@ -297,7 +278,7 @@ def test_evaluate_metrics_pair_index_assignment(client: TestClient):
         metrics=[MetricType("bert_score")],
     ).model_dump()
 
-    response = client.post(
+    response = sync_client.post(
         EVALUATE_URL,
         json=request_body,
         headers=mock_headers(),

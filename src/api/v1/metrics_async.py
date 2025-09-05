@@ -35,7 +35,8 @@ async def evaluate_metrics_async(
     to check status and retrieve results when complete.
 
     Args:
-        request: The metrics request containing text pairs, requested metrics, and optional webhook URL
+        request: The metrics request containing text pairs, requested metrics,
+        and optional webhook URL
 
     Returns:
         AsyncJobResponse containing the job ID and status information
@@ -58,14 +59,17 @@ async def evaluate_metrics_async(
             )
 
         if request.webhook_url:
-            message = f"Job queued successfully. Results will be sent to webhook URL: {request.webhook_url}"
+            msg = (
+                f"Job queued successfully. Results will be sent to webhook URL: "
+                f"{request.webhook_url}"
+            )
         else:
-            message = "Job queued successfully. Use the job ID to check status and retrieve results."
+            msg = "Job queued successfully. Use the job ID to check status and retrieve results."
 
         return AsyncJobResponse(
             job_id=job_id,
             status="PENDING",
-            message=message,
+            message=msg,
             estimated_completion_time=len(request.text_pairs)
             * len(request.metrics)
             * 0.5,  # Rough estimate in seconds
@@ -106,7 +110,10 @@ async def health_check_async(
         except Exception as worker_exc:
             return {
                 "status": "degraded",
-                "message": f"Async API is running but workers may be unavailable: {str(worker_exc)}",
+                "message": (
+                    f"Async API is running but workers may be unavailable: "
+                    f"{str(worker_exc)}"
+                ),
                 "worker_status": "unavailable",
                 "celery_available": False,
             }

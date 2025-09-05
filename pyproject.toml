@@ -65,14 +65,9 @@ reportMissingTypeStubs = false
 # Basic settings
 disable = [
 
-  "C0114", # missing-module-docstring
-  "C0116", # missing-function-docstring
-  "C0301", # line-too-long
-  "E1136", # unsubscriptable-object
   "R0801", # duplicate-code
   "W0212", # protected-access
   "W0231", # super-init-not-called
-  "W0621", # redefined-outer-name
   "W0718", # broad-exception-caught
 ]
 
@@ -80,4 +75,4 @@ max-line-length = 100
 jobs = 4
 
 [tool.pylint.'FORMAT']
-max-line-length = 150 # Too long, shorten to 100
+max-line-length = 100

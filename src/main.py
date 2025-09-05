@@ -1,3 +1,5 @@
+"""Main application entry point."""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.core.settings import settings
@@ -6,7 +8,7 @@ from src.api.v1 import metrics_sync, metrics_async, jobs
 app = FastAPI(
     title="llm-scorecaster",
     version=settings.version,
-    description="An open-source LLM metrics evaluation API supporting BERT score, BLEU, ROUGE, and more",
+    description="An open-source LLM metrics evaluation API.",
     docs_url="/docs",
     redoc_url="/redoc",
 )

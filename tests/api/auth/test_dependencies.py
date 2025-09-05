@@ -1,3 +1,5 @@
+"""Tests for the authentication dependencies."""
+
 from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException, status
@@ -7,15 +9,15 @@ from src.api.auth.dependencies import verify_api_key
 from src.api.auth.dependencies import security
 
 
-@pytest.fixture
-def mock_token():
+@pytest.fixture(name="mock_token")
+def mock_token_fixture():
     """Create a mock HTTPAuthorizationCredentials token."""
     token = Mock(spec=HTTPAuthorizationCredentials)
     return token
 
 
-@pytest.fixture
-def valid_api_key():
+@pytest.fixture(name="valid_api_key")
+def valid_api_key_fixture():
     """Return a valid API key for testing."""
     return "test-api-key-123"
 

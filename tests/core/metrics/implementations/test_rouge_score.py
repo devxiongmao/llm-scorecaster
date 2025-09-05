@@ -1,31 +1,33 @@
+"""Tests for the ROUGE Score metric implementation."""
+
 from unittest.mock import Mock, patch
 import pytest
 
 from src.core.metrics.implementations.rouge_score import RougeMetric
-from src.models.schemas import MetricType, MetricResult, TextPair
+from src.models.schemas import MetricType, MetricResult
 
 
 # Fixtures
-@pytest.fixture
-def rouge_metric():
+@pytest.fixture(name="rouge_metric")
+def rouge_metric_fixture():
     """Basic ROUGE metric instance."""
     return RougeMetric()
 
 
-@pytest.fixture
-def custom_rouge_metric():
+@pytest.fixture(name="custom_rouge_metric")
+def custom_rouge_metric_fixture():
     """ROUGE metric with custom configuration."""
     return RougeMetric(rouge_types=["rouge1", "rouge2"], use_stemmer=False)
 
 
-@pytest.fixture
-def rouge1_only_metric():
+@pytest.fixture(name="rouge1_only_metric")
+def rouge1_only_metric_fixture():
     """ROUGE metric with only ROUGE-1."""
     return RougeMetric(rouge_types=["rouge1"])
 
 
-@pytest.fixture
-def mock_rouge_scorer():
+@pytest.fixture(name="mock_rouge_scorer")
+def mock_rouge_scorer_fixture():
     """Mock rouge-score scorer with typical return values."""
     scorer = Mock()
 
@@ -57,36 +59,6 @@ def mock_rouge_scorer():
         "rougeLsum": mock_rouge_l_sum,
     }
     return scorer
-
-
-@pytest.fixture
-def sample_text_pair():
-    """Single text pair for testing."""
-    return TextPair(
-        reference="The quick brown fox jumps over the lazy dog.",
-        candidate="A fast brown fox leaps over a sleepy dog.",
-    )
-
-
-@pytest.fixture
-def sample_text_pairs():
-    """Multiple text pairs for testing."""
-    return [
-        TextPair(reference="Hello world.", candidate="Hi world."),
-        TextPair(
-            reference="Python is great for data science.",
-            candidate="Python is awesome for ML.",
-        ),
-        TextPair(
-            reference="Testing code is important.", candidate="Code testing matters."
-        ),
-    ]
-
-
-@pytest.fixture
-def empty_text_pairs():
-    """Empty list of text pairs."""
-    return []
 
 
 # Basic property tests
@@ -700,12 +672,13 @@ def test_different_rouge_type_combinations(rouge_types):
         result = rouge_metric.compute_single("reference", "candidate")
 
         assert result.details is not None
-        assert result.details["rouge_types"] == rouge_types
+        assert result.details.get("rouge_types") == rouge_types
 
         # Check that we have scores for all specified types
         for rouge_type in rouge_types:
-            assert result.details.get(rouge_type) is not None
-            assert result.details[rouge_type]["f1"] == 0.7246
+            rouge_score = result.details.get(rouge_type)
+            assert rouge_score is not None
+            assert rouge_score["f1"] == 0.7246
 
         # Primary score should be ROUGE-L if available, otherwise first
         if "rougeL" in rouge_types:

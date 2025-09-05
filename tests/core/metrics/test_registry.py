@@ -1,3 +1,5 @@
+"""Tests for the MetricRegistry class."""
+
 from unittest.mock import Mock, patch
 from typing import Any
 

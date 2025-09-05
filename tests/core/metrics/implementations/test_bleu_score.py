@@ -1,19 +1,22 @@
+"""Tests for the BLEU Score metric implementation."""
+
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 import pytest
 
 from src.core.metrics.implementations.bleu_score import BleuMetric, BleuConfig
-from src.models.schemas import MetricType, MetricResult, TextPair
+from src.models.schemas import MetricType, MetricResult
 
 
 # Fixtures
-@pytest.fixture
-def bleu_metric():
+@pytest.fixture(name="bleu_metric")
+def bleu_metric_fixture():
     """Basic BLEU Score metric instance."""
     return BleuMetric()
 
 
-@pytest.fixture
-def custom_bleu_metric():
+@pytest.fixture(name="custom_bleu_metric")
+def custom_bleu_metric_fixture():
     """BLEU Score metric with custom configuration."""
     return BleuMetric(
         config=BleuConfig(
@@ -26,8 +29,8 @@ def custom_bleu_metric():
     )
 
 
-@pytest.fixture
-def mock_bleu_scorer():
+@pytest.fixture(name="mock_bleu_scorer")
+def mock_bleu_scorer_fixture():
     """Mock SacreBLEU scorer with typical return values."""
     scorer = Mock()
 
@@ -41,31 +44,6 @@ def mock_bleu_scorer():
 
     scorer.sentence_score.return_value = mock_score_result
     return scorer
-
-
-@pytest.fixture
-def sample_text_pair():
-    """Single text pair for testing."""
-    return TextPair(
-        reference="The quick brown fox jumps over the lazy dog",
-        candidate="A fast brown fox leaps over a sleepy dog",
-    )
-
-
-@pytest.fixture
-def sample_text_pairs():
-    """Multiple text pairs for testing."""
-    return [
-        TextPair(reference="Hello world", candidate="Hi world"),
-        TextPair(reference="Python is great", candidate="Python is awesome"),
-        TextPair(reference="Testing code", candidate="Code testing"),
-    ]
-
-
-@pytest.fixture
-def empty_text_pairs():
-    """Empty list of text pairs."""
-    return []
 
 
 # Basic property tests
@@ -597,17 +575,21 @@ def test_different_max_n_values(max_n):
         result = bleu_metric.compute_single("reference", "candidate")
 
         assert result.details is not None
-        assert result.details["max_n"] == max_n
+        assert isinstance(result.details, dict)
+        details: Dict[str, Any] = result.details
+
+        assert details.get("max_n") == max_n
 
         # Check that we have scores for 1 to max_n
         for n in range(1, max_n + 1):
-            assert result.details.get(f"bleu_{n}") is not None
-            assert result.details[f"bleu_{n}"] > 0
+            bleu_score = details.get(f"bleu_{n}")
+            assert bleu_score is not None
+            assert bleu_score > 0
 
         # Check that we don't have scores beyond max_n
         for n in range(max_n + 1, 6):
-            if result.details.get(f"bleu_{n}") is not None:
-                assert result.details.get(f"bleu_{n}") == 0.0
+            if details.get(f"bleu_{n}") is not None:
+                assert details.get(f"bleu_{n}") == 0.0
 
 
 @pytest.mark.parametrize("smooth_method", ["exp", "floor", "add-k", "none"])

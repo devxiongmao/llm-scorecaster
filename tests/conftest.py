@@ -41,8 +41,8 @@ def valid_request_body_fixture():
     ).model_dump()
 
 
-@pytest.fixture
-def sample_text_pair():
+@pytest.fixture(name="sample_text_pair")
+def sample_text_pair_fixture():
     """Single text pair for testing."""
     return TextPair(
         reference="The quick brown fox jumps over the lazy dog",
@@ -50,8 +50,8 @@ def sample_text_pair():
     )
 
 
-@pytest.fixture
-def sample_text_pairs():
+@pytest.fixture(name="sample_text_pairs")
+def sample_text_pairs_fixture():
     """Multiple text pairs for testing."""
     return [
         TextPair(reference="Hello world", candidate="Hi world"),
@@ -60,7 +60,7 @@ def sample_text_pairs():
     ]
 
 
-@pytest.fixture
-def empty_text_pairs():
+@pytest.fixture(name="empty_text_pairs")
+def empty_text_pairs_fixture():
     """Empty list of text pairs."""
     return []

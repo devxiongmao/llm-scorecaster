@@ -68,7 +68,6 @@ disable = [
   "R0801", # duplicate-code
   "W0212", # protected-access
   "W0231", # super-init-not-called
-  "W0621", # redefined-outer-name
   "W0718", # broad-exception-caught
 ]
 

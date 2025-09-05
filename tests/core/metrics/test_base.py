@@ -371,14 +371,14 @@ class TestMetricTypes:
 # Additional fixtures and parameterized tests
 
 
-@pytest.fixture
-def sample_metric():
+@pytest.fixture(name="sample_metric")
+def sample_metric_fixture():
     """Fixture providing a sample metric instance."""
     return ConcreteMetric("sample", MetricType.ROUGE)
 
 
-@pytest.fixture
-def sample_text_pairs():
+@pytest.fixture(name="sample_text_pairs")
+def sample_text_pairs_fixture():
     """Fixture providing sample text pairs."""
     return [
         TextPair(
@@ -393,8 +393,8 @@ def sample_text_pairs():
     ]
 
 
-@pytest.fixture
-def complex_text_pairs():
+@pytest.fixture(name="complex_text_pairs")
+def complex_text_pairs_fixture():
     """Fixture providing more complex text pairs for testing."""
     return [
         TextPair(reference="", candidate=""),  # Empty strings

@@ -51,20 +51,20 @@ class ConcreteObserver(MetricObserver):
 # Fixtures
 
 
-@pytest.fixture
-def observer():
+@pytest.fixture(name="observer")
+def observer_fixture():
     """Basic concrete observer for testing."""
     return ConcreteObserver()
 
 
-@pytest.fixture
-def sample_result():
+@pytest.fixture(name="sample_result")
+def sample_result_fixture():
     """Single metric result for testing."""
     return MetricResult(metric_name="test", score=0.85)
 
 
-@pytest.fixture
-def sample_results():
+@pytest.fixture(name="sample_results")
+def sample_results_fixture():
     """List of metric results for testing."""
     return [
         MetricResult(metric_name="test", score=0.85, details={"precision": 0.9}),
@@ -73,8 +73,8 @@ def sample_results():
     ]
 
 
-@pytest.fixture
-def test_error():
+@pytest.fixture(name="test_error")
+def test_error_fixture():
     """Sample exception for testing."""
     return ValueError("Test error message")
 

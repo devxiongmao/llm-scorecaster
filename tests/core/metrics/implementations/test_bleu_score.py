@@ -9,14 +9,14 @@ from src.models.schemas import MetricType, MetricResult
 
 
 # Fixtures
-@pytest.fixture
-def bleu_metric():
+@pytest.fixture(name="bleu_metric")
+def bleu_metric_fixture():
     """Basic BLEU Score metric instance."""
     return BleuMetric()
 
 
-@pytest.fixture
-def custom_bleu_metric():
+@pytest.fixture(name="custom_bleu_metric")
+def custom_bleu_metric_fixture():
     """BLEU Score metric with custom configuration."""
     return BleuMetric(
         config=BleuConfig(
@@ -29,8 +29,8 @@ def custom_bleu_metric():
     )
 
 
-@pytest.fixture
-def mock_bleu_scorer():
+@pytest.fixture(name="mock_bleu_scorer")
+def mock_bleu_scorer_fixture():
     """Mock SacreBLEU scorer with typical return values."""
     scorer = Mock()
 

@@ -8,14 +8,14 @@ from src.models.schemas import MetricType, MetricResult, TextPair
 
 
 # Fixtures
-@pytest.fixture
-def bert_metric():
+@pytest.fixture(name="bert_metric")
+def bert_metric_fixture():
     """Basic BERT Score metric instance."""
     return BertScoreMetric()
 
 
-@pytest.fixture
-def mock_scorer():
+@pytest.fixture(name="mock_scorer")
+def mock_scorer_fixture():
     """Mock BERT scorer with typical return values."""
     scorer = Mock()
     # Mock typical BERT Score return values (tensors with single values)

@@ -16,12 +16,14 @@ EVALUATE_URL = "/evaluate"
 
 @pytest.fixture(name="client")
 def client_fixture():
+    """Create a test client for the metrics sync endpoints."""
     with TestClient(mock_domain_app(metrics_router)) as client:
         yield client
 
 
 @pytest.fixture(scope="module", name="valid_request_body")
 def valid_request_body_fixture():
+    """Create a valid request body for the metrics sync endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(
@@ -39,6 +41,7 @@ def valid_request_body_fixture():
 
 @pytest.fixture(scope="module", name="single_pair_request")
 def single_pair_request_fixture():
+    """Create a single pair request body for the metrics sync endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference="Test reference text", candidate="Test candidate text")
@@ -49,6 +52,7 @@ def single_pair_request_fixture():
 
 @pytest.fixture(scope="module", name="empty_metrics_request")
 def empty_metrics_request_fixture():
+    """Create an empty metrics request body for the metrics sync endpoints."""
     return {
         "text_pairs": [{"reference": "Test reference", "candidate": "Test candidate"}],
         "metrics": [],
@@ -57,6 +61,7 @@ def empty_metrics_request_fixture():
 
 @pytest.fixture(scope="module", name="invalid_request_body")
 def invalid_request_body_fixture():
+    """Create an invalid request body for the metrics sync endpoints."""
     return {
         "text_pairs": [
             {

@@ -17,12 +17,14 @@ HEALTH_URL = "/health"
 
 @pytest.fixture(name="client")
 def client_fixture():
+    """Create a test client for the metrics async endpoints."""
     with TestClient(mock_domain_app(metrics_async_router)) as client:
         yield client
 
 
 @pytest.fixture(scope="module", name="valid_request_body")
 def valid_request_body_fixture():
+    """Create a valid request body for the metrics async endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(
@@ -40,6 +42,7 @@ def valid_request_body_fixture():
 
 @pytest.fixture(scope="module", name="valid_request_body_webhook")
 def valid_request_body_webhook_fixture():
+    """Create a valid request body for the metrics async endpoints with a webhook URL."""
     return MetricsRequest(
         text_pairs=[
             TextPair(
@@ -58,6 +61,7 @@ def valid_request_body_webhook_fixture():
 
 @pytest.fixture(scope="module", name="single_pair_request")
 def single_pair_request_fixture():
+    """Create a single pair request body for the metrics async endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference="Test reference text", candidate="Test candidate text")
@@ -68,6 +72,7 @@ def single_pair_request_fixture():
 
 @pytest.fixture(scope="module", name="large_batch_request")
 def large_batch_request_fixture():
+    """Create a large batch request body for the metrics async endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference=f"Reference {i}", candidate=f"Candidate {i}")
@@ -428,6 +433,7 @@ class TestEvaluateMetricsAsync:
         test_case: AuthTestCase,
         valid_request_body: dict,
     ):
+        """Test authentication for async evaluate endpoint."""
         mock_task = Mock()
         mock_compute_task.apply_async.return_value = mock_task
 

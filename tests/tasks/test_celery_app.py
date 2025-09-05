@@ -100,7 +100,7 @@ def mock_metric_registry_fixture(mock_metric_instance):
 class TestComputeMetricsForRequest:
     """Tests for the compute_metrics_for_request function."""
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_success(
         self, mock_registry, sample_request_data: Dict[str, Any], mock_metric_instance
     ):
@@ -142,7 +142,7 @@ class TestComputeMetricsForRequest:
         # Verify metric computation was called for each pair
         assert mock_metric_instance.compute_single.call_count == 2
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_multiple_metrics(
         self, mock_registry, single_pair_request_data: Dict[str, Any]
     ):
@@ -184,7 +184,7 @@ class TestComputeMetricsForRequest:
         mock_bert.compute_single.assert_called_once()
         mock_bleu.compute_single.assert_called_once()
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_empty_data(
         self, mock_registry, empty_request_data: Dict[str, Any]
     ):
@@ -196,7 +196,7 @@ class TestComputeMetricsForRequest:
         mock_registry.discover_metrics.assert_not_called()
         mock_registry.get_metrics.assert_not_called()
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_metric_computation_failure(
         self, mock_registry, sample_request_data: Dict[str, Any]
     ):
@@ -210,7 +210,7 @@ class TestComputeMetricsForRequest:
         with pytest.raises(Exception, match="Metric computation failed"):
             compute_metrics_for_request(sample_request_data)
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_invalid_request_data(self, _):
         """Test handling of invalid request data."""
         invalid_data = {"invalid": "data"}
@@ -218,7 +218,7 @@ class TestComputeMetricsForRequest:
         with pytest.raises(Exception):  # Pydantic validation error
             compute_metrics_for_request(invalid_data)
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_registry_discovery_failure(
         self, mock_registry, sample_request_data: Dict[str, Any]
     ):
@@ -230,7 +230,7 @@ class TestComputeMetricsForRequest:
         with pytest.raises(Exception, match="Registry discovery failed"):
             compute_metrics_for_request(sample_request_data)
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_for_request_result_serialization(
         self, mock_registry, sample_request_data: Dict[str, Any], mock_metric_instance
     ):
@@ -505,7 +505,7 @@ class TestCeleryAppConfiguration:
 class TestIntegrationScenarios:
     """Integration tests for complete task workflows."""
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_full_workflow_single_metric(self, mock_registry, mock_metric_instance):
         """Test complete workflow with single metric."""
         mock_registry.discover_metrics.return_value = None
@@ -535,7 +535,7 @@ class TestIntegrationScenarios:
         # Verify task state updates occurred
         assert mock_task.update_state.call_count == 2
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_full_workflow_multiple_metrics_and_pairs(self, mock_registry):
         """Test complete workflow with multiple metrics and text pairs."""
         # Setup multiple metrics
@@ -734,7 +734,7 @@ class TestWebhookFunctionality:
                 # Verify sleep was called for retry backoff
                 mock_sleep.assert_called_once()
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_with_webhook_success(
         self, mock_registry, webhook_request_data, mock_metric_instance
     ):
@@ -766,7 +766,7 @@ class TestWebhookFunctionality:
         mock_set_loop.assert_called_once_with(mock_loop)
         mock_loop.close.assert_called_once()
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_with_webhook_failure(
         self, mock_registry, webhook_request_data, mock_metric_instance
     ):
@@ -793,7 +793,7 @@ class TestWebhookFunctionality:
         assert result["webhook_sent"] is False
         assert "webhook_error" not in result  # No exception, just failed delivery
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_with_webhook_exception(
         self, mock_registry, webhook_request_data, mock_metric_instance
     ):
@@ -827,7 +827,7 @@ class TestWebhookFunctionality:
             # Verify logger was called for the webhook error
             mock_logger.error.assert_called_once()
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_without_webhook(
         self, mock_registry, sample_request_data, mock_metric_instance
     ):
@@ -845,7 +845,7 @@ class TestWebhookFunctionality:
         assert "webhook_sent" not in result
         assert "webhook_error" not in result
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_error_with_webhook(
         self, mock_registry, webhook_request_data
     ):
@@ -870,7 +870,7 @@ class TestWebhookFunctionality:
         mock_loop_constructor.assert_called_once()
         mock_set_loop.assert_called_once_with(mock_loop)
 
-    @patch("src.tasks.celery_app.metric_registry")
+    @patch("src.core.computation.metric_registry")
     def test_compute_metrics_task_error_with_webhook_exception(
         self, mock_registry, webhook_request_data
     ):

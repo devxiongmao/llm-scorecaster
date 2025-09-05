@@ -14,8 +14,8 @@ import httpx
 
 from celery import Celery, signals
 
-from src.core.metrics.registry import metric_registry
-from src.models.schemas import TextPair, MetricsRequest, TextPairResult
+from src.core.computation import compute_metrics_core
+from src.models.schemas import MetricsRequest
 from src.core.settings import settings
 
 logging.basicConfig(
@@ -148,46 +148,18 @@ def task_failure_handler(sender, exception, _traceback, **_kwargs):
     )
 
 
-def compute_metrics_for_request(request_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def compute_metrics_for_request(
+    request_data: Dict[str, Any],
+) -> List[Dict[str, Any]]:
     """
     Compute metrics for a request. This is the same logic as the sync version
     but adapted to work with serialized data.
     """
     # Reconstruct the request from serialized data
     request = MetricsRequest(**request_data)
-
-    # Discover and get the requested metrics
-    metric_registry.discover_metrics()
-    metrics = metric_registry.get_metrics([m.value for m in request.metrics])
-
-    results = []
-
-    # Convert Pydantic TextPairs to the format metrics expect
-    text_pairs = [
-        TextPair(reference=pair.reference, candidate=pair.candidate)
-        for pair in request.text_pairs
-    ]
-
-    for pair_idx, text_pair in enumerate(text_pairs):
-        pair_results = []
-
-        # Compute each requested metric for this text pair
-        for _, metric_instance in metrics.items():
-            result = metric_instance.compute_single(
-                text_pair.reference, text_pair.candidate
-            )
-            pair_results.append(result)
-
-        # Create the response format (serialize to dict for Celery)
-        result_data = TextPairResult(
-            pair_index=pair_idx,
-            reference=text_pair.reference,
-            candidate=text_pair.candidate,
-            metrics=pair_results,
-        )
-        results.append(result_data.model_dump())
-
-    return results
+    results = compute_metrics_core(request)
+    # Serialize results for Celery
+    return [result.model_dump() for result in results]
 
 
 async def send_webhook_notification(

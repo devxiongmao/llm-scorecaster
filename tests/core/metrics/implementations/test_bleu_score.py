@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from src.core.metrics.implementations.bleu_score import BleuMetric, BleuConfig
-from src.models.schemas import MetricType, MetricResult, TextPair
+from src.models.schemas import MetricType, MetricResult
 
 
 # Fixtures
@@ -43,31 +43,6 @@ def mock_bleu_scorer():
 
     scorer.sentence_score.return_value = mock_score_result
     return scorer
-
-
-@pytest.fixture
-def sample_text_pair():
-    """Single text pair for testing."""
-    return TextPair(
-        reference="The quick brown fox jumps over the lazy dog",
-        candidate="A fast brown fox leaps over a sleepy dog",
-    )
-
-
-@pytest.fixture
-def sample_text_pairs():
-    """Multiple text pairs for testing."""
-    return [
-        TextPair(reference="Hello world", candidate="Hi world"),
-        TextPair(reference="Python is great", candidate="Python is awesome"),
-        TextPair(reference="Testing code", candidate="Code testing"),
-    ]
-
-
-@pytest.fixture
-def empty_text_pairs():
-    """Empty list of text pairs."""
-    return []
 
 
 # Basic property tests

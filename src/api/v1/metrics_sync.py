@@ -11,54 +11,20 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from src.core.computation import compute_metrics_core
 from src.models.schemas import (
     MetricsRequest,
     MetricsResponse,
     TextPairResult,
 )
 from src.api.auth.dependencies import verify_api_key
-from src.core.metrics.registry import metric_registry
-from src.models.schemas import TextPair
 
 router = APIRouter()
 
 
 def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]:
     """Compute actual metrics using the registry."""
-
-    # Discover and get the requested metrics
-    metric_registry.discover_metrics()
-    metrics = metric_registry.get_metrics([m.value for m in request.metrics])
-
-    results = []
-
-    # Convert Pydantic TextPairs to the format metrics expect
-    text_pairs = [
-        TextPair(reference=pair.reference, candidate=pair.candidate)
-        for pair in request.text_pairs
-    ]
-
-    for pair_idx, text_pair in enumerate(text_pairs):
-        pair_results = []
-
-        # Compute each requested metric for this text pair
-        for _, metric_instance in metrics.items():
-            result = metric_instance.compute_single(
-                text_pair.reference, text_pair.candidate
-            )
-            pair_results.append(result)
-
-        # Create the response format
-        results.append(
-            TextPairResult(
-                pair_index=pair_idx,
-                reference=text_pair.reference,
-                candidate=text_pair.candidate,
-                metrics=pair_results,
-            )
-        )
-
-    return results
+    return compute_metrics_core(request)
 
 
 @router.post("/evaluate", response_model=MetricsResponse)

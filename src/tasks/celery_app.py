@@ -293,7 +293,10 @@ def _compute_metrics_task_logic(self, request_data):
         # Final result
         final_result = {
             "success": True,
-            "message": f"Successfully calculated {len(request_data.get('metrics', []))} metrics for {len(request_data.get('text_pairs', []))} text pairs",
+            "message": (
+                f"Successfully calculated {len(request_data.get('metrics', []))} metrics "
+                f"for {len(request_data.get('text_pairs', []))} text pairs"
+            ),
             "results": results,
             "processing_time_seconds": round(processing_time, 3),
             "total_operations": total_operations,

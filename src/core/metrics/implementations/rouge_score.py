@@ -25,7 +25,8 @@ class RougeMetric(BaseMetric):
         Initialize ROUGE metric.
 
         Args:
-            rouge_types: List of ROUGE variants to compute. Defaults to ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
+            rouge_types: List of ROUGE variants to compute.
+            Defaults to ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
                         - rouge1: Unigram overlap
                         - rouge2: Bigram overlap
                         - rougeL: Longest Common Subsequence (LCS)

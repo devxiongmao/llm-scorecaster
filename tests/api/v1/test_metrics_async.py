@@ -208,7 +208,8 @@ class TestEvaluateMetricsAsync:
         assert data["job_id"] == "test-job-id-123"
         assert data["status"] == "PENDING"
         assert (
-            "Job queued successfully. Results will be sent to webhook URL: http://www.this-is-a-fake-domain.com/results"
+            "Job queued successfully. "
+            + "Results will be sent to webhook URL: http://www.this-is-a-fake-domain.com/results"
             in data["message"]
         )
         assert "estimated_completion_time" in data

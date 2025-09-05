@@ -85,7 +85,10 @@ async def evaluate_metrics_sync(
 
         return MetricsResponse(
             success=True,
-            message=f"Successfully calculated {len(request.metrics)} metrics for {len(request.text_pairs)} text pairs",
+            message=(
+                f"Successfully calculated {len(request.metrics)} metrics for "
+                f"{len(request.text_pairs)} text pairs"
+            ),
             results=results,
             processing_time_seconds=round(processing_time, 3),
         )

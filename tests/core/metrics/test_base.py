@@ -253,7 +253,10 @@ class TestBaseMetric:
         assert repr_repr == str_repr
 
     def test_batch_size_parameter(self):
-        """Test that batch_size parameter is accepted (even if not used in default implementation)."""
+        """
+        Test that batch_size parameter is accepted
+        (even if not used in default implementation).
+        """
         metric = ConcreteMetric()
         text_pairs = [TextPair(reference="hello", candidate="world")]
 

@@ -1,3 +1,5 @@
+"""Pydantic models for the LLM-scorecaster"""
+
 from typing import List, Dict, Any, Optional
 from enum import Enum
 from pydantic import BaseModel, Field

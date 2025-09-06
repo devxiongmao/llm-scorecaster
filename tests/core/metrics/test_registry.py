@@ -1,3 +1,5 @@
+"""Tests for the MetricRegistry class."""
+
 from unittest.mock import Mock, patch
 from typing import Any
 
@@ -60,6 +62,7 @@ class MockFailingMetric(BaseMetric):
     """Mock metric that fails during instantiation."""
 
     def __init__(self):
+        super().__init__()
         raise RuntimeError("Initialization failed")
 
     @property

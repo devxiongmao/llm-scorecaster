@@ -1,3 +1,5 @@
+"""Tests for the jobs endpoints."""
+
 from unittest.mock import patch, Mock
 import pytest
 from fastapi import status
@@ -15,6 +17,7 @@ LIST_JOBS_URL = "/"
 
 @pytest.fixture(name="client")
 def client_fixture():
+    """Create a test client for the jobs endpoints."""
     with TestClient(mock_domain_app(jobs_router)) as client:
         yield client
 

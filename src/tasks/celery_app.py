@@ -14,8 +14,8 @@ import httpx
 
 from celery import Celery, signals
 
-from src.core.metrics.registry import metric_registry
-from src.models.schemas import TextPair, MetricsRequest, TextPairResult
+from src.core.computation import compute_metrics_core
+from src.models.schemas import MetricsRequest
 from src.core.settings import settings
 
 logging.basicConfig(
@@ -64,6 +64,16 @@ def setup_celery_logging(**_kwargs):
 
 @signals.task_prerun.connect
 def task_prerun_handler(task, **_kwargs):
+    """
+    Handle task pre-run signal.
+
+    Logs task start and records the start time in task headers
+    for duration calculation.
+
+    Args:
+        task: The Celery task instance
+        **_kwargs: Additional keyword arguments (unused)
+    """
     if task.request.headers is None:
         task.request.headers = {}
     task.request.headers["started_at"] = time.time()
@@ -72,6 +82,15 @@ def task_prerun_handler(task, **_kwargs):
 
 @signals.task_success.connect
 def task_success_handler(sender, **_kwargs):
+    """
+    Handle task success signal.
+
+    Logs successful task completion with duration information.
+
+    Args:
+        sender: The task instance that completed successfully
+        **_kwargs: Additional keyword arguments (unused)
+    """
     started_at = sender.request.headers.get("started_at")
     duration = time.time() - started_at if started_at else None
     logger.info(
@@ -84,6 +103,16 @@ def task_success_handler(sender, **_kwargs):
 
 @signals.task_retry.connect
 def task_retry_handler(sender, reason, **_kwargs):
+    """
+    Handle task retry signal.
+
+    Logs task retry attempts with the reason and duration information.
+
+    Args:
+        sender: The task instance being retried
+        reason: The reason for the retry
+        **_kwargs: Additional keyword arguments (unused)
+    """
     started_at = sender.request.headers.get("started_at")
     duration = time.time() - started_at if started_at else None
     logger.error(
@@ -97,6 +126,17 @@ def task_retry_handler(sender, reason, **_kwargs):
 
 @signals.task_failure.connect
 def task_failure_handler(sender, exception, _traceback, **_kwargs):
+    """
+    Handle task failure signal.
+
+    Logs task failures with exception details and duration information.
+
+    Args:
+        sender: The task instance that failed
+        exception: The exception that caused the failure
+        _traceback: The traceback object (unused)
+        **_kwargs: Additional keyword arguments (unused)
+    """
     started_at = sender.request.headers.get("started_at")
     duration = time.time() - started_at if started_at else None
     logger.error(
@@ -108,46 +148,18 @@ def task_failure_handler(sender, exception, _traceback, **_kwargs):
     )
 
 
-def compute_metrics_for_request(request_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def compute_metrics_for_request(
+    request_data: Dict[str, Any],
+) -> List[Dict[str, Any]]:
     """
     Compute metrics for a request. This is the same logic as the sync version
     but adapted to work with serialized data.
     """
     # Reconstruct the request from serialized data
     request = MetricsRequest(**request_data)
-
-    # Discover and get the requested metrics
-    metric_registry.discover_metrics()
-    metrics = metric_registry.get_metrics([m.value for m in request.metrics])
-
-    results = []
-
-    # Convert Pydantic TextPairs to the format metrics expect
-    text_pairs = [
-        TextPair(reference=pair.reference, candidate=pair.candidate)
-        for pair in request.text_pairs
-    ]
-
-    for pair_idx, text_pair in enumerate(text_pairs):
-        pair_results = []
-
-        # Compute each requested metric for this text pair
-        for _, metric_instance in metrics.items():
-            result = metric_instance.compute_single(
-                text_pair.reference, text_pair.candidate
-            )
-            pair_results.append(result)
-
-        # Create the response format (serialize to dict for Celery)
-        result_data = TextPairResult(
-            pair_index=pair_idx,
-            reference=text_pair.reference,
-            candidate=text_pair.candidate,
-            metrics=pair_results,
-        )
-        results.append(result_data.model_dump())
-
-    return results
+    results = compute_metrics_core(request)
+    # Serialize results for Celery
+    return [result.model_dump() for result in results]
 
 
 async def send_webhook_notification(
@@ -183,7 +195,6 @@ async def send_webhook_notification(
                 )
 
                 if response.status_code in [200, 201, 202, 204]:
-
                     logger.info(
                         "Webhook sent successfully for job %s to %s",
                         job_id,
@@ -254,7 +265,10 @@ def _compute_metrics_task_logic(self, request_data):
         # Final result
         final_result = {
             "success": True,
-            "message": f"Successfully calculated {len(request_data.get('metrics', []))} metrics for {len(request_data.get('text_pairs', []))} text pairs",
+            "message": (
+                f"Successfully calculated {len(request_data.get('metrics', []))} metrics "
+                f"for {len(request_data.get('text_pairs', []))} text pairs"
+            ),
             "results": results,
             "processing_time_seconds": round(processing_time, 3),
             "total_operations": total_operations,

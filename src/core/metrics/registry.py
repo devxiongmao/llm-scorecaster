@@ -1,3 +1,5 @@
+"""Registry for discovering and managing metric implementations."""
+
 from typing import Any, Dict, List, Tuple, Type
 import importlib
 import pkgutil

@@ -1,3 +1,5 @@
+"""Tests for the main FastAPI application endpoints and functionality."""
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
@@ -9,16 +11,19 @@ from src.core.settings import settings
 
 @pytest.fixture(name="client")
 def client_fixture():
+    """Create a test client for the main FastAPI application endpoints."""
     with TestClient(app) as client:
         yield client
 
 
 def test_root_returns_200(client: TestClient):
+    """Test that the root endpoint returns a 200 status code."""
     response = client.get("/")
     assert response.status_code == 200
 
 
 def test_root_returns_correct_structure(client: TestClient):
+    """Test that the root endpoint returns a correct structure."""
     response = client.get("/")
     json_response = response.json()
 
@@ -27,6 +32,7 @@ def test_root_returns_correct_structure(client: TestClient):
 
 
 def test_root_returns_expected_values(client: TestClient):
+    """Test that the root endpoint returns expected values."""
     response = client.get("/")
     json_response = response.json()
 
@@ -37,11 +43,13 @@ def test_root_returns_expected_values(client: TestClient):
 
 
 def test_health_returns_200(client: TestClient):
+    """Test that the health endpoint returns a 200 status code."""
     response = client.get("/health")
     assert response.status_code == 200
 
 
 def test_health_returns_correct_structure(client: TestClient):
+    """Test that the health endpoint returns a correct structure."""
     response = client.get("/health")
     json_response = response.json()
 
@@ -50,6 +58,7 @@ def test_health_returns_correct_structure(client: TestClient):
 
 
 def test_health_returns_expected_values(client: TestClient):
+    """Test that the health endpoint returns expected values."""
     response = client.get("/health")
     json_response = response.json()
 
@@ -59,6 +68,7 @@ def test_health_returns_expected_values(client: TestClient):
 
 
 def test_health_and_root_have_same_version(client: TestClient):
+    """Test that the health and root endpoints have the same version."""
     root_response = client.get("/")
     health_response = client.get("/health")
 
@@ -66,26 +76,31 @@ def test_health_and_root_have_same_version(client: TestClient):
 
 
 def test_nonexistent_endpoint_returns_404(client: TestClient):
+    """Test that a nonexistent endpoint returns a 404 status code."""
     response = client.get("/nonexistent-endpoint")
     assert response.status_code == 404
 
 
 def test_wrong_method_returns_405(client: TestClient):
+    """Test that a wrong method returns a 405 status code."""
     response = client.post("/health")
     assert response.status_code == 405
 
 
 def test_docs_endpoint_accessible(client: TestClient):
+    """Test that the docs endpoint is accessible."""
     response = client.get("/docs")
     assert response.status_code == 200
 
 
 def test_redoc_endpoint_accessible(client: TestClient):
+    """Test that the redoc endpoint is accessible."""
     response = client.get("/redoc")
     assert response.status_code == 200
 
 
 def test_cors_headers_present(client: TestClient):
+    """Test that the CORS headers are present."""
     response = client.get("/", headers={"Origin": "https://example.com"})
     assert response.status_code == 200
     # Check if CORS headers are present
@@ -94,6 +109,7 @@ def test_cors_headers_present(client: TestClient):
 
 
 def test_endpoints_return_json(client: TestClient):
+    """Test that the endpoints return JSON."""
     endpoints = ["/", "/health"]
 
     for endpoint in endpoints:
@@ -115,15 +131,18 @@ class ValidationRequest(BaseModel):
 
 @app.post("/validation-exception")
 def validation_exception(request: ValidationRequest):
+    """Validation exception endpoint."""
     return {"name": request.name, "age": request.age}
 
 
 def test_validation_exception_returns_422(client: TestClient):
+    """Test that the validation exception endpoint returns a 422 status code."""
     response = client.post("/validation-exception", json={})
     assert response.status_code == 422
 
 
 def test_validation_exception_returns_validation_errors(client: TestClient):
+    """Test that the validation exception endpoint returns validation errors."""
     response = client.post("/validation-exception", json={"name": 123})
     assert response.status_code == 422
 
@@ -146,6 +165,7 @@ def test_validation_exception_returns_validation_errors(client: TestClient):
 
 
 def test_validation_exception_success(client: TestClient):
+    """Test that the validation exception endpoint returns a 200 status code."""
     response = client.post("/validation-exception", json={"name": "John", "age": 30})
     assert response.status_code == 200
     assert response.json() == {"name": "John", "age": 30}

@@ -1,3 +1,5 @@
+"""Observer interface for tracking metric computation progress."""
+
 from abc import ABC, abstractmethod
 from typing import List
 

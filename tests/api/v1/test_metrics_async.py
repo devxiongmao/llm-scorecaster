@@ -1,3 +1,5 @@
+"""Tests for the metrics async endpoints."""
+
 from dataclasses import dataclass
 from unittest.mock import patch, Mock
 import pytest
@@ -6,47 +8,24 @@ from fastapi.testclient import TestClient
 from celery.exceptions import WorkerLostError
 
 from src.models.schemas import MetricType, MetricsRequest, TextPair
-from src.api.v1.metrics_async import router as metrics_async_router
-from tests.test_utils import mock_domain_app, mock_headers
+from tests.test_utils import mock_headers
 
 EVALUATE_URL = "/evaluate"
 HEALTH_URL = "/health"
 
 
-@pytest.fixture(name="client")
-def client_fixture():
-    with TestClient(mock_domain_app(metrics_async_router)) as client:
-        yield client
-
-
-@pytest.fixture(scope="module", name="valid_request_body")
-def valid_request_body_fixture():
-    return MetricsRequest(
-        text_pairs=[
-            TextPair(
-                reference="The quick brown fox jumps over the lazy dog.",
-                candidate="A swift auburn fox leaps over a sleepy canine.",
-            ),
-            TextPair(
-                reference="Hello world, how are you?",
-                candidate="Hi world, how are you doing?",
-            ),
-        ],
-        metrics=[MetricType("bert_score")],
-    ).model_dump()
-
-
 @pytest.fixture(scope="module", name="valid_request_body_webhook")
 def valid_request_body_webhook_fixture():
+    """Create a valid request body for the metrics async endpoints with a webhook URL."""
     return MetricsRequest(
         text_pairs=[
             TextPair(
-                reference="The quick brown fox jumps over the lazy dog.",
-                candidate="A swift auburn fox leaps over a sleepy canine.",
+                reference="The astronaut is going to the moon.",
+                candidate="Eating vegetables provides a variety of benefits",
             ),
             TextPair(
-                reference="Hello world, how are you?",
-                candidate="Hi world, how are you doing?",
+                reference="The quick brown fox jumps over the lazy dog.",
+                candidate="A swift auburn fox leaps over a sleepy canine.",
             ),
         ],
         metrics=[MetricType("bert_score")],
@@ -56,6 +35,7 @@ def valid_request_body_webhook_fixture():
 
 @pytest.fixture(scope="module", name="single_pair_request")
 def single_pair_request_fixture():
+    """Create a single pair request body for the metrics async endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference="Test reference text", candidate="Test candidate text")
@@ -66,6 +46,7 @@ def single_pair_request_fixture():
 
 @pytest.fixture(scope="module", name="large_batch_request")
 def large_batch_request_fixture():
+    """Create a large batch request body for the metrics async endpoints."""
     return MetricsRequest(
         text_pairs=[
             TextPair(reference=f"Reference {i}", candidate=f"Candidate {i}")
@@ -125,7 +106,11 @@ class TestEvaluateMetricsAsync:
     @patch("src.api.v1.metrics_async.uuid.uuid4")
     @patch("src.api.v1.metrics_async.compute_metrics_task")
     def test_evaluate_metrics_async_success(
-        self, mock_compute_task, mock_uuid, client: TestClient, valid_request_body: dict
+        self,
+        mock_compute_task,
+        mock_uuid,
+        async_client: TestClient,
+        valid_request_body: dict,
     ):
         """Test successful async metrics evaluation."""
         # Mock UUID generation
@@ -137,7 +122,7 @@ class TestEvaluateMetricsAsync:
         mock_task.id = "test-job-id-123"
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body,
             headers=mock_headers(),
@@ -176,7 +161,7 @@ class TestEvaluateMetricsAsync:
         self,
         mock_compute_task,
         mock_uuid,
-        client: TestClient,
+        async_client: TestClient,
         valid_request_body_webhook: dict,
     ):
         """Test successful async metrics evaluation."""
@@ -189,7 +174,7 @@ class TestEvaluateMetricsAsync:
         mock_task.id = "test-job-id-123"
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body_webhook,
             headers=mock_headers(),
@@ -201,7 +186,8 @@ class TestEvaluateMetricsAsync:
         assert data["job_id"] == "test-job-id-123"
         assert data["status"] == "PENDING"
         assert (
-            "Job queued successfully. Results will be sent to webhook URL: http://www.this-is-a-fake-domain.com/results"
+            "Job queued successfully. "
+            + "Results will be sent to webhook URL: http://www.this-is-a-fake-domain.com/results"
             in data["message"]
         )
         assert "estimated_completion_time" in data
@@ -228,7 +214,7 @@ class TestEvaluateMetricsAsync:
         self,
         mock_compute_task,
         mock_uuid,
-        client: TestClient,
+        async_client: TestClient,
         single_pair_request: dict,
     ):
         """Test async evaluation with single text pair and multiple metrics."""
@@ -239,7 +225,7 @@ class TestEvaluateMetricsAsync:
         mock_task.id = "single-pair-job"
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=single_pair_request,
             headers=mock_headers(),
@@ -259,7 +245,7 @@ class TestEvaluateMetricsAsync:
         self,
         mock_compute_task,
         mock_uuid,
-        client: TestClient,
+        async_client: TestClient,
         large_batch_request: dict,
     ):
         """Test async evaluation with large batch."""
@@ -270,7 +256,7 @@ class TestEvaluateMetricsAsync:
         mock_task.id = "large-batch-job"
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=large_batch_request,
             headers=mock_headers(),
@@ -287,7 +273,11 @@ class TestEvaluateMetricsAsync:
     @patch("src.api.v1.metrics_async.uuid.uuid4")
     @patch("src.api.v1.metrics_async.compute_metrics_task")
     def test_evaluate_metrics_async_task_submission_failure(
-        self, mock_compute_task, mock_uuid, client: TestClient, valid_request_body: dict
+        self,
+        mock_compute_task,
+        mock_uuid,
+        async_client: TestClient,
+        valid_request_body: dict,
     ):
         """Test handling of Celery task submission failure."""
         mock_uuid.return_value = Mock()
@@ -298,7 +288,7 @@ class TestEvaluateMetricsAsync:
         mock_task.id = None
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body,
             headers=mock_headers(),
@@ -311,7 +301,11 @@ class TestEvaluateMetricsAsync:
     @patch("src.api.v1.metrics_async.uuid.uuid4")
     @patch("src.api.v1.metrics_async.compute_metrics_task")
     def test_evaluate_metrics_async_celery_exception(
-        self, mock_compute_task, mock_uuid, client: TestClient, valid_request_body: dict
+        self,
+        mock_compute_task,
+        mock_uuid,
+        async_client: TestClient,
+        valid_request_body: dict,
     ):
         """Test handling of Celery exceptions during task submission."""
         mock_uuid.return_value = Mock()
@@ -322,7 +316,7 @@ class TestEvaluateMetricsAsync:
             "Celery broker unreachable"
         )
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body,
             headers=mock_headers(),
@@ -335,12 +329,12 @@ class TestEvaluateMetricsAsync:
 
     @patch("src.api.v1.metrics_async.uuid.uuid4")
     def test_evaluate_metrics_async_uuid_generation_failure(
-        self, mock_uuid, client: TestClient, valid_request_body: dict
+        self, mock_uuid, async_client: TestClient, valid_request_body: dict
     ):
         """Test handling of UUID generation failure."""
         mock_uuid.side_effect = Exception("UUID generation failed")
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body,
             headers=mock_headers(),
@@ -351,7 +345,9 @@ class TestEvaluateMetricsAsync:
         assert "Failed to queue async job" in data["detail"]
         assert "UUID generation failed" in data["detail"]
 
-    def test_evaluate_metrics_async_invalid_request_body(self, client: TestClient):
+    def test_evaluate_metrics_async_invalid_request_body(
+        self, async_client: TestClient
+    ):
         """Test async evaluation with invalid request body."""
         invalid_request = {
             "text_pairs": [
@@ -363,7 +359,7 @@ class TestEvaluateMetricsAsync:
             "metrics": ["bert_score"],
         }
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=invalid_request,
             headers=mock_headers(),
@@ -371,7 +367,7 @@ class TestEvaluateMetricsAsync:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_evaluate_metrics_async_empty_metrics(self, client: TestClient):
+    def test_evaluate_metrics_async_empty_metrics(self, async_client: TestClient):
         """Test async evaluation with empty metrics list."""
         empty_metrics_request = {
             "text_pairs": [
@@ -380,7 +376,7 @@ class TestEvaluateMetricsAsync:
             "metrics": [],
         }
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=empty_metrics_request,
             headers=mock_headers(),
@@ -388,9 +384,11 @@ class TestEvaluateMetricsAsync:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_evaluate_metrics_async_missing_request_body(self, client: TestClient):
+    def test_evaluate_metrics_async_missing_request_body(
+        self, async_client: TestClient
+    ):
         """Test async evaluation without request body."""
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             headers=mock_headers(),
         )
@@ -422,15 +420,15 @@ class TestEvaluateMetricsAsync:
     def test_evaluate_metrics_async_authentication(
         self,
         mock_compute_task,
-        client: TestClient,
+        async_client: TestClient,
         test_case: AuthTestCase,
         valid_request_body: dict,
     ):
-
+        """Test authentication for async evaluate endpoint."""
         mock_task = Mock()
         mock_compute_task.apply_async.return_value = mock_task
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=valid_request_body,
             headers=test_case.headers,
@@ -440,7 +438,7 @@ class TestEvaluateMetricsAsync:
     @patch("src.api.v1.metrics_async.uuid.uuid4")
     @patch("src.api.v1.metrics_async.compute_metrics_task")
     def test_evaluate_metrics_async_serialization_check(
-        self, mock_compute_task, mock_uuid, client: TestClient
+        self, mock_compute_task, mock_uuid, async_client: TestClient
     ):
         """Test that Pydantic models are properly converted to dict for Celery."""
         mock_uuid.return_value = Mock()
@@ -455,7 +453,7 @@ class TestEvaluateMetricsAsync:
             metrics=[MetricType("bert_score")],
         ).model_dump()
 
-        response = client.post(
+        response = async_client.post(
             EVALUATE_URL,
             json=request_body,
             headers=mock_headers(),
@@ -482,14 +480,16 @@ class TestHealthCheckAsync:
     """Tests for the health_check_async endpoint."""
 
     @patch("src.api.v1.metrics_async.health_check_task")
-    def test_health_check_async_healthy(self, mock_health_task, client: TestClient):
+    def test_health_check_async_healthy(
+        self, mock_health_task, async_client: TestClient
+    ):
         """Test health check when workers are healthy."""
         # Mock successful health check
         mock_task = Mock()
         mock_task.get.return_value = {"status": "healthy"}
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -501,7 +501,7 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_workers_unavailable(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test health check when workers are unavailable."""
         # Mock task that times out
@@ -509,7 +509,7 @@ class TestHealthCheckAsync:
         mock_task.get.side_effect = Exception("Worker timeout")
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -521,14 +521,14 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_worker_lost_error(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test health check with WorkerLostError."""
         mock_task = Mock()
         mock_task.get.side_effect = WorkerLostError("Worker process died")
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -540,12 +540,12 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_task_submission_failure(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test health check when task submission fails."""
         mock_health_task.apply_async.side_effect = Exception("Broker connection failed")
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
@@ -554,7 +554,7 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_timeout_handling(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test health check timeout handling."""
         mock_task = Mock()
@@ -562,7 +562,7 @@ class TestHealthCheckAsync:
         mock_task.get.side_effect = TimeoutError("Task timed out after 5 seconds")
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -574,14 +574,14 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_worker_status_unknown(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test health check when worker returns unknown status."""
         mock_task = Mock()
         mock_task.get.return_value = {}  # No status field
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -614,7 +614,7 @@ class TestHealthCheckAsync:
     def test_health_check_async_authentication(
         self,
         mock_health_task,
-        client: TestClient,
+        async_client: TestClient,
         headers: dict[str, str],
         expected_status: int,
     ):
@@ -623,19 +623,19 @@ class TestHealthCheckAsync:
         mock_task.get.return_value = {"status": "healthy"}
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=headers)
+        response = async_client.get(HEALTH_URL, headers=headers)
         assert response.status_code == expected_status
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_response_structure(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test that health check response has correct structure."""
         mock_task = Mock()
         mock_task.get.return_value = {"status": "operational", "worker_id": "worker-1"}
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -650,14 +650,14 @@ class TestHealthCheckAsync:
 
     @patch("src.api.v1.metrics_async.health_check_task")
     def test_health_check_async_task_get_timeout_value(
-        self, mock_health_task, client: TestClient
+        self, mock_health_task, async_client: TestClient
     ):
         """Test that health check uses correct timeout value."""
         mock_task = Mock()
         mock_task.get.return_value = {"status": "healthy"}
         mock_health_task.apply_async.return_value = mock_task
 
-        response = client.get(HEALTH_URL, headers=mock_headers())
+        response = async_client.get(HEALTH_URL, headers=mock_headers())
 
         assert response.status_code == status.HTTP_200_OK
 

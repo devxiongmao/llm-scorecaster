@@ -1,3 +1,5 @@
+"""Tests for the BERT Score metric implementation."""
+
 from unittest.mock import Mock, patch
 import pytest
 
@@ -6,14 +8,14 @@ from src.models.schemas import MetricType, MetricResult, TextPair
 
 
 # Fixtures
-@pytest.fixture
-def bert_metric():
+@pytest.fixture(name="bert_metric")
+def bert_metric_fixture():
     """Basic BERT Score metric instance."""
     return BertScoreMetric()
 
 
-@pytest.fixture
-def mock_scorer():
+@pytest.fixture(name="mock_scorer")
+def mock_scorer_fixture():
     """Mock BERT scorer with typical return values."""
     scorer = Mock()
     # Mock typical BERT Score return values (tensors with single values)
@@ -23,31 +25,6 @@ def mock_scorer():
         [0.82],  # f1
     )
     return scorer
-
-
-@pytest.fixture
-def sample_text_pair():
-    """Single text pair for testing."""
-    return TextPair(
-        reference="The quick brown fox jumps over the lazy dog",
-        candidate="A fast brown fox leaps over a sleepy dog",
-    )
-
-
-@pytest.fixture
-def sample_text_pairs():
-    """Multiple text pairs for testing."""
-    return [
-        TextPair(reference="Hello world", candidate="Hi world"),
-        TextPair(reference="Python is great", candidate="Python is awesome"),
-        TextPair(reference="Testing code", candidate="Code testing"),
-    ]
-
-
-@pytest.fixture
-def empty_text_pairs():
-    """Empty list of text pairs."""
-    return []
 
 
 # Basic property tests

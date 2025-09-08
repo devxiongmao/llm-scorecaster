@@ -448,7 +448,8 @@ class ProgressTracker(MetricObserver):
     def on_metric_error(self, metric_name: str, error):
         print(f"{metric_name}: error occurred: {error}")
 
-# Use it:
+# Modify the src/core/computation.py file to set your observers.
+# Like so:
 bert_metric = metric_registry.get_metric("bert_score")
 tracker = ProgressTracker()
 bert_metric.add_observer(tracker)

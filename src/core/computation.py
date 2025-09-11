@@ -32,25 +32,44 @@ def compute_metrics_core(request: MetricsRequest) -> List[TextPairResult]:
         for pair in request.text_pairs
     ]
 
-    for pair_idx, text_pair in enumerate(text_pairs):
-        pair_results = []
-
-        # Compute each requested metric for this text pair
+    if request.batch_size:
+        # Process all text pairs using batch processing for each metric
         for _, metric_instance in metrics.items():
-            result = metric_instance.compute_single(
-                text_pair.reference, text_pair.candidate
+            batch_results = metric_instance.compute_batch(
+                text_pairs, batch_size=request.batch_size
             )
-            pair_results.append(result)
 
-        # Create the response format
-        results.append(
-            TextPairResult(
-                pair_index=pair_idx,
-                reference=text_pair.reference,
-                candidate=text_pair.candidate,
-                metrics=pair_results,
+            for pair_idx, result in enumerate(batch_results):
+                if pair_idx >= len(results):
+                    results.append(
+                        TextPairResult(
+                            pair_index=pair_idx,
+                            reference=text_pairs[pair_idx].reference,
+                            candidate=text_pairs[pair_idx].candidate,
+                            metrics=[],
+                        )
+                    )
+                results[pair_idx].metrics.append(result)
+    else:
+        for pair_idx, text_pair in enumerate(text_pairs):
+            pair_results = []
+
+            # Compute each requested metric for this text pair
+            for _, metric_instance in metrics.items():
+                result = metric_instance.compute_single(
+                    text_pair.reference, text_pair.candidate
+                )
+                pair_results.append(result)
+
+            # Create the response format
+            results.append(
+                TextPairResult(
+                    pair_index=pair_idx,
+                    reference=text_pair.reference,
+                    candidate=text_pair.candidate,
+                    metrics=pair_results,
+                )
             )
-        )
 
     return results
 

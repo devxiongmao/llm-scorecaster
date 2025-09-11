@@ -102,19 +102,19 @@ class DeviceMetricsObserver(MetricObserver):
         """Log a formatted metrics snapshot."""
         timestamp_str = time.strftime("%H:%M:%S", time.localtime(metrics["timestamp"]))
 
+        elapsed_seconds = 0
+        if self._baseline_metrics and "timestamp" in self._baseline_metrics:
+            elapsed_seconds = metrics["timestamp"] - self._baseline_metrics["timestamp"]
+
         logger.info(
             "[%s] Device Metrics Snapshot - %s - %s (Elapsed: %.1fs)",
             snapshot_type,
             self._current_metric,
             timestamp_str,
-            metrics["elapsed_seconds"],
+            elapsed_seconds,
         )
         logger.info(
-            "  System: CPU %.1f%%, "
-            "RAM %.2fGB/"
-            "%.2fGB "
-            "(%.1f%%), "
-            "Available %.2fGB",
+            "  System: CPU %.1f%%, RAM %.2fGB/%.2fGB (%.1f%%), Available %.2fGB",
             metrics["system_cpu_percent"],
             metrics["system_memory_used_gb"],
             metrics["system_memory_total_gb"],
@@ -164,7 +164,12 @@ class DeviceMetricsObserver(MetricObserver):
             )
             return
 
-        duration = self._final_metrics["elapsed_seconds"]
+        duration = (
+            self._final_metrics["timestamp"] - self._baseline_metrics["timestamp"]
+            if "timestamp" in self._baseline_metrics
+            and "timestamp" in self._final_metrics
+            else 0
+        )
 
         logger.info("=" * 60)
         logger.info("DEVICE METRICS SUMMARY: %s", self._current_metric)

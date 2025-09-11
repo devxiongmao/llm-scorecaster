@@ -29,6 +29,7 @@ pytest-asyncio = { version = "^1.1.0", optional = true }
 black = { version = "^25.1.0", optional = true }
 pyright = { version = "^1.1.403", optional = true }
 pylint = { version = "^3.3.8", optional = true }
+psutil = "^7.0.0"
 
 [tool.poetry.extras]
 # Individual metric extras
@@ -78,6 +79,9 @@ disable = [
   "W0212", # protected-access
   "W0718", # broad-exception-caught
 ]
+
+[tool.pylint.design]
+max-attributes = 10
 
 max-line-length = 100
 jobs = 4

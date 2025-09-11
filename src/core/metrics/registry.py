@@ -257,6 +257,15 @@ class MetricRegistry:
         self._discovered = False
         self.discover_metrics()
 
+    def are_metrics_discovered(self) -> bool:
+        """Public method letting users know
+        if metrics have been discovered yet
+
+        Returns:
+            bool: True if metrics have been discovered
+        """
+        return self._discovered
+
 
 # Global registry instance
 metric_registry = MetricRegistry()

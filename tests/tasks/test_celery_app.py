@@ -31,7 +31,6 @@ def sample_request_data_fixture():
             },
         ],
         "metrics": ["bert_score"],
-        "batch_size": 32,
     }
 
 
@@ -46,7 +45,6 @@ def single_pair_request_data_fixture():
             }
         ],
         "metrics": ["bert_score", "bleu_score"],
-        "batch_size": 32,
     }
 
 
@@ -56,7 +54,6 @@ def empty_request_data_fixture():
     return {
         "text_pairs": [],
         "metrics": [],
-        "batch_size": 32,
     }
 
 
@@ -71,7 +68,6 @@ def webhook_request_data_fixture():
             }
         ],
         "metrics": ["bert_score"],
-        "batch_size": 32,
         "webhook_url": "https://example.com/webhook",
     }
 
@@ -514,7 +510,6 @@ class TestIntegrationScenarios:
         request_data = {
             "text_pairs": [{"reference": "Hello world", "candidate": "Hi world"}],
             "metrics": ["bert_score"],
-            "batch_size": 32,
         }
 
         mock_task = Mock()
@@ -565,7 +560,6 @@ class TestIntegrationScenarios:
                 {"reference": "Second ref", "candidate": "Second cand"},
             ],
             "metrics": ["bert_score", "bleu_score"],
-            "batch_size": 32,
         }
 
         mock_task = Mock()

@@ -106,13 +106,13 @@ class TestComputeMetricsForRequest:
     ):
         """Test successful metrics computation for request."""
         # Setup mock registry
-        mock_registry.discover_metrics.return_value = None
+        mock_registry.are_metrics_discovered.return_value = True
         mock_registry.get_metrics.return_value = {"bert_score": mock_metric_instance}
 
         results = compute_metrics_for_request(sample_request_data)
 
         # Verify registry interactions
-        mock_registry.discover_metrics.assert_called_once()
+        mock_registry.are_metrics_discovered.assert_called_once()
         mock_registry.get_metrics.assert_called_once_with(["bert_score"])
 
         # Verify results structure
@@ -223,7 +223,7 @@ class TestComputeMetricsForRequest:
         self, mock_registry, sample_request_data: Dict[str, Any]
     ):
         """Test handling of metric registry discovery failure."""
-        mock_registry.discover_metrics.side_effect = Exception(
+        mock_registry.are_metrics_discovered.side_effect = Exception(
             "Registry discovery failed"
         )
 
@@ -850,7 +850,7 @@ class TestWebhookFunctionality:
         self, mock_registry, webhook_request_data
     ):
         """Test compute_metrics_task error handling with webhook notification."""
-        mock_registry.discover_metrics.side_effect = ValueError("Registry error")
+        mock_registry.are_metrics_discovered.side_effect = ValueError("Registry error")
 
         mock_task = Mock()
         mock_task.update_state = Mock()
@@ -875,7 +875,7 @@ class TestWebhookFunctionality:
         self, mock_registry, webhook_request_data
     ):
         """Test compute_metrics_task error handling with webhook exception."""
-        mock_registry.discover_metrics.side_effect = ValueError("Registry error")
+        mock_registry.are_metrics_discovered.side_effect = ValueError("Registry error")
 
         mock_task = Mock()
         mock_task.update_state = Mock()

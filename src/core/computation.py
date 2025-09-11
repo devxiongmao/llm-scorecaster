@@ -4,6 +4,8 @@ from typing import List
 
 from src.models.schemas import MetricsRequest, TextPair, TextPairResult
 from src.core.metrics.registry import metric_registry
+from src.core.metrics.observers.progress_tracker_observer import ProgressTracker
+from src.core.metrics.observers.device_metrics_observer import DeviceMetricsObserver
 
 
 def compute_metrics_core(request: MetricsRequest) -> List[TextPairResult]:
@@ -19,8 +21,7 @@ def compute_metrics_core(request: MetricsRequest) -> List[TextPairResult]:
     Returns:
         List of TextPairResult objects with computed metrics
     """
-    # Discover and get the requested metrics
-    metric_registry.discover_metrics()
+    init_observers()
     metrics = metric_registry.get_metrics([m.value for m in request.metrics])
 
     results = []
@@ -52,3 +53,28 @@ def compute_metrics_core(request: MetricsRequest) -> List[TextPairResult]:
         )
 
     return results
+
+
+def init_observers():
+    """
+    Setup for observers. This function returns early if metrics have
+    already been discovered. If not, then we initialize the metrics
+    and add the observers to the metrics we want.
+    """
+    if metric_registry.are_metrics_discovered():
+        return
+
+    metric_registry.discover_metrics()
+
+    # Set observers per metric
+    bert_metric = metric_registry.get_metric("bert_score")
+    bleu_metric = metric_registry.get_metric("bleu_score")
+    rouge_metric = metric_registry.get_metric("rouge_score")
+
+    tracker = ProgressTracker()
+    bert_metric.add_observer(tracker)
+    bleu_metric.add_observer(tracker)
+    rouge_metric.add_observer(tracker)
+
+    device_tracker = DeviceMetricsObserver()
+    bleu_metric.add_observer(device_tracker)

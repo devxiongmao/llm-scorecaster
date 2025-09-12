@@ -16,7 +16,7 @@ from src.models.schemas import (
     TextPairResult,
 )
 from src.api.auth.dependencies import verify_api_key
-from src.tasks.celery_app import celery_app
+from src.celery.celery_app import celery_app
 
 router = APIRouter()
 

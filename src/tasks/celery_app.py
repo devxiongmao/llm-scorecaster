@@ -9,10 +9,10 @@ import asyncio
 import time
 import logging
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 import httpx
 
-from celery import Celery, signals
+from celery import Celery, signals, Task
 
 from src.core.computation import compute_metrics_core
 from src.models.schemas import MetricsRequest
@@ -348,7 +348,7 @@ def _compute_metrics_task_logic(self, request_data):
 
 
 @celery_app.task(bind=True, name="compute_metrics_async")
-def compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+def _compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Celery task for computing metrics asynchronously.
 
@@ -361,7 +361,13 @@ def compute_metrics_task(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
     return _compute_metrics_task_logic(self, request_data)
 
 
+compute_metrics_task = cast(Task, _compute_metrics_task)
+
+
 @celery_app.task(name="health_check")
-def health_check_task() -> Dict[str, str]:
+def _health_check_task() -> Dict[str, str]:
     """Simple health check task to verify Celery is working."""
     return {"status": "healthy", "message": "Celery worker is running"}
+
+
+health_check_task = cast(Task, _health_check_task)

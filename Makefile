@@ -17,7 +17,7 @@ dev:
 
 .PHONY: worker
 worker:
-	poetry run celery -A src.tasks.celery_app worker --loglevel=info --concurrency=2
+	poetry run celery -A src.celery.celery_app worker --loglevel=info --concurrency=2
 
 .PHONY: redis-start
 redis-start:

@@ -7,7 +7,6 @@ based on user queries.
 """
 
 import time
-import asyncio
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -40,10 +39,6 @@ async def evaluate_metrics_sync(
     """
     try:
         start_time = time.time()
-
-        # Simulate processing time based on batch size
-        processing_delay = len(request.text_pairs) * len(request.metrics) * 0.01
-        await asyncio.sleep(min(processing_delay, 2.0))  # Cap at 2 seconds for demo
 
         results = compute_metrics_for_request(request)
 

@@ -15,7 +15,8 @@ from src.models.schemas import (
     AsyncJobResponse,
 )
 from src.api.auth.dependencies import verify_api_key
-from src.tasks.celery_app import compute_metrics_task, health_check_task
+from src.celery.tasks.health import health_check_task
+from src.celery.tasks.metrics import compute_metrics_task
 
 router = APIRouter()
 

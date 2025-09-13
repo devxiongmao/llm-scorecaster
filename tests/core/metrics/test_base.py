@@ -73,6 +73,15 @@ class TestBaseMetric:
         metric = ConcreteMetric("custom_name")
         assert metric.description == "custom_name evaluation metric"
 
+    def test_default_get_model_info(self):
+        """Test that default get_model_info uses metric name."""
+        metric = ConcreteMetric("custom_name")
+        result = metric.get_model_info()
+        assert result == {
+            "name": "custom_name",
+            "description": "custom_name evaluation metric",
+        }
+
     def test_compute_single_basic(self):
         """Test single computation works correctly."""
         metric = ConcreteMetric()

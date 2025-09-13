@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile: Dockerfile
     user: python
-    command: poetry run celery -A src.tasks.celery_app worker --loglevel=info --concurrency=2
+    command: poetry run celery -A src.celery.celery_app worker --loglevel=info --concurrency=2
     volumes:
       - ./src:/app/src
     env_file:

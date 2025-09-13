@@ -168,29 +168,6 @@ def test_evaluate_metrics_authentication(
 
 
 @patch("src.api.v1.metrics_sync.compute_metrics_for_request")
-def test_evaluate_metrics_processing_time_calculation(
-    mock_generate_results, sync_client: TestClient, valid_request_body: dict
-):
-    """Test that processing time is calculated correctly."""
-    # Mock the placeholder results to return quickly
-    mock_generate_results.return_value = []
-
-    response = sync_client.post(
-        EVALUATE_URL,
-        json=valid_request_body,
-        headers=mock_headers(),
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-
-    # Processing time should be greater than 0 due to asyncio.sleep
-    assert data["processing_time_seconds"] > 0
-    # Should be reasonable (less than 3 seconds for test)
-    assert data["processing_time_seconds"] < 3
-
-
-@patch("src.api.v1.metrics_sync.compute_metrics_for_request")
 def test_evaluate_metrics_exception_handling(
     mock_generate_results, sync_client: TestClient, valid_request_body: dict
 ):

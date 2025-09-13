@@ -1,7 +1,7 @@
 """Abstract base class for all metrics."""
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, Dict, List
 from src.core.metrics.metric_observer import MetricObserver
 from src.models.schemas import MetricType, TextPair, MetricResult
 
@@ -138,6 +138,13 @@ class BaseMetric(ABC):
                 observer.on_metric_error(self.name, error)
             except Exception:
                 pass
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Get information about the metric."""
+        return {
+            "name": self.name,
+            "description": self.description,
+        }
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"

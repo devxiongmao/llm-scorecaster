@@ -127,7 +127,7 @@ jobs:
     needs: analyze_changes
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
       - name: Install Poetry
@@ -142,7 +142,7 @@ jobs:
     needs: analyze_changes
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
       - name: Install Poetry
@@ -159,7 +159,7 @@ jobs:
       API_KEY: your-secret-api-key-here
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
       - name: Install Poetry

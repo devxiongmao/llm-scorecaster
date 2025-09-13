@@ -42,16 +42,6 @@ def _compute_metrics_task_logic(
 ) -> Dict[str, Any]:
     """
     Core logic for computing metrics asynchronously.
-
-    Args:
-        task_instance: The Celery task instance (for state updates)
-        request_data: Serialized MetricsRequest data
-
-    Returns:
-        Dictionary containing the results and metadata
-
-    Raises:
-        Exception: Re-raises any exceptions that occur during processing
     """
     try:
         start_time = time.time()
@@ -110,8 +100,11 @@ def _compute_metrics_task_logic(
                     final_result,
                 )
 
-                # Add webhook status to the result
                 final_result["webhook_sent"] = webhook_success
+                if not webhook_success:
+                    final_result["webhook_error"] = (
+                        "Webhook delivery failed after all retries"
+                    )
 
             except Exception as webhook_error:
                 logger.error(

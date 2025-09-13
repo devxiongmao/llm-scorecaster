@@ -285,7 +285,7 @@ class TestWebhookIntegration:
         assert webhook_payload["status"] == "FAILED"
         assert webhook_payload["data"]["success"] is False
 
-    def test_webhook_failure_handling(self, http_server):
+    def test_webhook_failure_handling(self):
         """Test handling when webhook endpoint is unreachable."""
         # Use a non-existent port for webhook URL
         webhook_url = "http://127.0.0.1:99999/webhook"

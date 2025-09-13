@@ -5,7 +5,6 @@ This module contains Celery tasks related to computing metrics for text pairs.
 """
 
 import time
-import asyncio
 import logging
 from typing import Dict, Any, List, cast
 from celery import Task
@@ -105,15 +104,11 @@ def _compute_metrics_task_logic(
         webhook_url = request_data.get("webhook_url")
         if webhook_url:
             try:
-                # Run the webhook notification asynchronously
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                webhook_success = loop.run_until_complete(
-                    send_webhook_notification(
-                        str(webhook_url), task_instance.request.id, final_result
-                    )
+                webhook_success = send_webhook_notification(
+                    str(webhook_url),
+                    task_instance.request.id,
+                    final_result,
                 )
-                loop.close()
 
                 # Add webhook status to the result
                 final_result["webhook_sent"] = webhook_success
@@ -153,14 +148,9 @@ def _compute_metrics_task_logic(
                     "exc_message": str(exc),
                 }
 
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(
-                    send_webhook_notification(
-                        str(webhook_url), task_instance.request.id, error_result
-                    )
+                send_webhook_notification(
+                    str(webhook_url), task_instance.request.id, error_result
                 )
-                loop.close()
 
             except Exception as webhook_error:
                 logger.error(

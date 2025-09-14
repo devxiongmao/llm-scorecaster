@@ -7,7 +7,6 @@ based on user queries.
 """
 
 import time
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.computation import compute_metrics_core

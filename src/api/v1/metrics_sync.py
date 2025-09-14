@@ -14,16 +14,10 @@ from src.core.computation import compute_metrics_core
 from src.models.schemas import (
     MetricsRequest,
     MetricsResponse,
-    TextPairResult,
 )
 from src.api.auth.dependencies import verify_api_key
 
 router = APIRouter()
-
-
-def compute_metrics_for_request(request: MetricsRequest) -> List[TextPairResult]:
-    """Compute actual metrics using the registry."""
-    return compute_metrics_core(request)
 
 
 @router.post("/evaluate", response_model=MetricsResponse)
@@ -40,7 +34,7 @@ async def evaluate_metrics_sync(
     try:
         start_time = time.time()
 
-        results = compute_metrics_for_request(request)
+        results = compute_metrics_core(request)
 
         processing_time = time.time() - start_time
 

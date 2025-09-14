@@ -167,7 +167,7 @@ def test_evaluate_metrics_authentication(
     assert response.status_code == expected_status
 
 
-@patch("src.api.v1.metrics_sync.compute_metrics_for_request")
+@patch("src.api.v1.metrics_sync.compute_metrics_core")
 def test_evaluate_metrics_exception_handling(
     mock_generate_results, sync_client: TestClient, valid_request_body: dict
 ):

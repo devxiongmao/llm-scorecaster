@@ -11,12 +11,39 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.computation import compute_metrics_core
 from src.models.schemas import (
+    IndexResponse,
     MetricsRequest,
     MetricsResponse,
 )
 from src.api.auth.dependencies import verify_api_key
 
 router = APIRouter()
+
+
+@router.get("/", response_model=IndexResponse)
+async def get_available_metrics(
+    _authenticated: bool = Depends(verify_api_key),
+) -> IndexResponse:
+    """
+    Retrieve the list of available metrics.
+
+    This endpoint returns a list of all metrics that can be evaluated
+    by the API. It does not perform any metric calculations.
+    """
+    try:
+        available_metrics = ["bleu", "rouge", "meteor", "bertscore"]
+
+        return IndexResponse(
+            success=True,
+            message="Available metrics retrieved successfully.",
+            results=available_metrics,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while retrieving available metrics: {str(e)}",
+        ) from e
 
 
 @router.post("/evaluate", response_model=MetricsResponse)

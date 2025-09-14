@@ -162,7 +162,8 @@ poetry install --extras "all"
 | `API_KEY`     | _required_               | Authentication key for API access |
 | `REDIS_URL`   | `redis://localhost:6379` | Redis connection string           |
 | `ENVIRONMENT` | `development`            | Application environment           |
-| `DEBUG`       | `false`                  | Enable debug mode                 |
+| `MAX_TIMEOUT` | `30`                     | Max timeout for webhook requests  |
+| `MAX_RETRIES` | `3`                      | Max retries for webhook requests  |
 
 ### API Documentation
 
@@ -517,6 +518,7 @@ The registry will automatically discover it on the next discover_metrics() call!
 - 🟢 **Complete**: Asynchronous API, Celery workers 
 - 🟢 **Complete**: Webhook support, post your results back when ready 
 - 🟢 **Complete**: Dockerize the app
+- 🟡 **In-Progress**: Metrics Router for live configuration and discovery
 
 ## Contributing
 

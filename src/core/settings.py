@@ -42,7 +42,6 @@ class Settings(BaseSettings):
         default="development",
         description="Application environment (development, staging, production)",
     )
-    debug: bool = Field(default=False, description="Enable debug mode for development")
 
     # Webhook settings
     max_timeout: int = Field(

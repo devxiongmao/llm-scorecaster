@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.computation import compute_metrics_core
 from src.models.schemas import (
     IndexResponse,
+    MetricsConfigRequest,
+    MetricsConfigResponse,
     MetricsRequest,
     MetricsResponse,
 )
@@ -84,4 +86,68 @@ async def evaluate_metrics_sync(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while processing metrics: {str(e)}",
+        ) from e
+
+
+@router.post("/configure", response_model=MetricsConfigResponse)
+async def configure_metrics(
+    request: MetricsConfigRequest, _authenticated: bool = Depends(verify_api_key)
+) -> MetricsConfigResponse:
+    """
+    Configure specific metrics to be used in future evaluations.
+
+    This endpoint allows you to set configuration parameters for individual metrics,
+    such as model paths, thresholds, or other metric-specific settings.
+    Each metric can have its own unique configuration.
+    """
+
+    try:
+        # Get the metric instances from the registry
+        metric_names = [metric.value for metric in request.configs.keys()]
+        metrics = metric_registry.get_metrics(metric_names)
+
+        configured_metric_names = []
+        failed_metrics = {}
+
+        # Configure each metric instance with its specific config
+        for metric_type, config in request.configs.items():
+            metric_name = metric_type.value
+            try:
+                if metric_name in metrics:
+                    metrics[metric_name].configure(config)
+                    configured_metric_names.append(metric_name)
+                else:
+                    failed_metrics[metric_name] = (
+                        f"Metric '{metric_name}' not found in registry"
+                    )
+            except NotImplementedError as e:
+                failed_metrics[metric_name] = str(e)
+            except Exception as e:
+                failed_metrics[metric_name] = f"Configuration failed: {str(e)}"
+
+        success = len(configured_metric_names) > 0
+
+        if success and not failed_metrics:
+            message = f"Successfully configured {len(configured_metric_names)} metrics"
+        elif success and failed_metrics:
+            message = (
+                f"Configured {len(configured_metric_names)} metrics, "
+                f"{len(failed_metrics)} failed"
+            )
+        else:
+            message = "Failed to configure any metrics"
+
+        return MetricsConfigResponse(
+            success=success,
+            message=message,
+            configured_metrics=(
+                configured_metric_names if configured_metric_names else None
+            ),
+            failed_metrics=failed_metrics if failed_metrics else None,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while configuring metrics: {str(e)}",
         ) from e

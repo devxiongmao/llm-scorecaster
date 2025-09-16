@@ -246,7 +246,7 @@ class BleuMetric(BaseMetric):
             "requires_download": False,
         }
 
-    def configure(self, config: Optional[BleuConfig] = None):
+    def configure(self, config: Optional[BleuConfig] = None) -> None:
         """
         Update BLEU configuration. Will take effect on next computation.
         Allows you to update the settings at runtime without recreating the metric.

@@ -1,6 +1,7 @@
 """Application settings loaded from environment variables."""
 
 from pathlib import Path
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -38,9 +39,9 @@ class Settings(BaseSettings):
     )
 
     # Environment
-    environment: str = Field(
+    environment: Literal["development", "production"] = Field(
         default="development",
-        description="Application environment (development, staging, production)",
+        description="Application environment (development or production)",
     )
 
     # Webhook settings

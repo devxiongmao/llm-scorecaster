@@ -11,7 +11,7 @@ import sys
 from celery import Celery, signals
 
 from src.core.settings import settings
-from .config import get_celery_config
+from .config import get_config_for_environment
 
 # Configure logging
 logging.basicConfig(
@@ -35,7 +35,7 @@ celery_app = Celery(
 )
 
 # Apply configuration
-celery_app.conf.update(get_celery_config())
+celery_app.conf.update(get_config_for_environment(settings.environment))
 
 
 @signals.setup_logging.connect

@@ -5,7 +5,7 @@ This module contains all Celery-specific configuration in one place,
 making it easy to modify settings without touching the core app setup.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 
 
 def get_celery_config() -> Dict[str, Any]:
@@ -71,3 +71,21 @@ def get_production_config() -> Dict[str, Any]:
         }
     )
     return config
+
+
+def get_config_for_environment(
+    environment: Literal["development", "production"],
+) -> Dict[str, Any]:
+    """
+    Get Celery configuration for the specified environment.
+
+    Args:
+        environment: The environment to get configuration for
+
+    Returns:
+        Dictionary containing environment-specific Celery configuration
+    """
+    if environment == "production":
+        return get_production_config()
+
+    return get_development_config()

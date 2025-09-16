@@ -78,16 +78,6 @@ class TestCeleryAppInitialization:
         # but we can verify the settings module is used
         assert mock_settings is not None
 
-    @patch("src.celery.celery_app.get_celery_config")
-    def test_celery_app_applies_configuration(self, mock_get_config):
-        """Test that Celery configuration is applied."""
-        mock_config = {"task_serializer": "json", "result_serializer": "json"}
-        mock_get_config.return_value = mock_config
-
-        # Since conf.update was already called during import,
-        # we verify the function would be called
-        assert mock_get_config is not None
-
 
 class TestSetupCeleryLogging:
     """Test the setup_celery_logging signal handler."""

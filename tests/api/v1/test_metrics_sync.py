@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from src.models.schemas import MetricType, MetricsRequest, TextPair
 from tests.test_utils import mock_headers
 
+INDEX_URL = "/"
 EVALUATE_URL = "/evaluate"
 
 
@@ -43,6 +44,47 @@ def invalid_request_body_fixture():
         ],
         "metrics": ["bert_score"],
     }
+
+
+def test_get_available_metrics_success(sync_client: TestClient):
+    """Test successful retrieval of available metrics."""
+    response = sync_client.get(
+        INDEX_URL,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+    assert data["success"] is True
+    assert "Available metrics retrieved successfully." in data["message"]
+    assert isinstance(data["results"], list)
+
+    # Check structure of first metric info
+    first_metric = data["results"][0]
+    assert "name" in first_metric
+    assert "type" in first_metric
+    assert "description" in first_metric
+    assert "requires_model_download" in first_metric
+    assert "class_name" in first_metric
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_get_available_metrics_exception_handling(
+    mock_metric_registry, sync_client: TestClient
+):
+    """Test exception handling in get_available_metrics endpoint."""
+    mock_metric_registry.list_available_metrics.side_effect = Exception("Test error")
+
+    response = sync_client.get(
+        INDEX_URL,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    data = response.json()
+    assert "An error occurred while retrieving available metrics:" in data["detail"]
+    assert "Test error" in data["detail"]
 
 
 def test_evaluate_metrics_success(sync_client: TestClient, valid_request_body: dict):

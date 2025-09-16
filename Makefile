@@ -29,7 +29,7 @@ redis-stop:
 
 .PHONY: test
 test:
-	poetry run python -m pytest
+	poetry run python -m pytest $(if $(TEST),$(TEST),.)
 
 .PHONY: lint
 lint:

@@ -16,6 +16,8 @@ from src.models.schemas import (
     MetricsResponse,
 )
 from src.api.auth.dependencies import verify_api_key
+from src.core.metrics.registry import metric_registry
+
 
 router = APIRouter()
 
@@ -31,12 +33,16 @@ async def get_available_metrics(
     by the API. It does not perform any metric calculations.
     """
     try:
-        available_metrics = ["bleu", "rouge", "meteor", "bertscore"]
+        available_metrics = metric_registry.list_available_metrics()
+
+        metric_info = [
+            metric_registry.get_metric_info(name) for name in available_metrics
+        ]
 
         return IndexResponse(
             success=True,
             message="Available metrics retrieved successfully.",
-            results=available_metrics,
+            results=metric_info,
         )
 
     except Exception as e:

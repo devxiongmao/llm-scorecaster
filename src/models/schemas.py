@@ -117,4 +117,4 @@ class IndexResponse(BaseModel):
 
     success: bool
     message: str
-    results: List[str]
+    results: List[Dict[str, Any]]

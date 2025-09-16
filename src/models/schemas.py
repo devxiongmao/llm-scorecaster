@@ -110,3 +110,11 @@ class JobStatusResponse(BaseModel):
     completed_at: Optional[str] = Field(
         default=None, description="ISO timestamp when the job completed"
     )
+
+
+class IndexResponse(BaseModel):
+    """Response model for index of available metrics."""
+
+    success: bool
+    message: str
+    results: List[Dict[str, Any]]

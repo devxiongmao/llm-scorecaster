@@ -146,6 +146,12 @@ class BaseMetric(ABC):
             "description": self.description,
         }
 
+    def configure(self, config: Any = None) -> None:
+        """Implement the configuration per metric."""
+        raise NotImplementedError(
+            f"Metric {self.name} does not have a configuration method at this time."
+        )
+
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"
 

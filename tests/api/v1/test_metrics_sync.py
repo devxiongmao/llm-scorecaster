@@ -1,6 +1,6 @@
 """Tests for the metrics sync endpoints."""
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -10,6 +10,7 @@ from tests.test_utils import mock_headers
 
 INDEX_URL = "/"
 EVALUATE_URL = "/evaluate"
+CONFIGURE_URL = "/configure"
 
 
 @pytest.fixture(scope="module", name="single_pair_request")
@@ -44,6 +45,38 @@ def invalid_request_body_fixture():
         ],
         "metrics": ["bert_score"],
     }
+
+
+@pytest.fixture(scope="module", name="valid_config_request")
+def valid_config_request_fixture():
+    """Create a valid configuration request for metrics."""
+    return {
+        "configs": {
+            "rouge_score": {"rouge_types": ["rouge1", "rougeL"], "use_stemmer": True},
+            "bleu_score": {
+                "max_n": 4,
+                "smooth_method": "exp",
+                "tokenize": "13a",
+                "lowercase": False,
+            },
+        }
+    }
+
+
+@pytest.fixture(scope="module", name="invalid_config_request")
+def invalid_config_request_fixture():
+    """Create an invalid configuration request with bad parameters."""
+    return {
+        "configs": {
+            "rouge_score": {"rouge_types": ["invalid_rouge_type"], "use_stemmer": True}
+        }
+    }
+
+
+@pytest.fixture(scope="module", name="empty_config_request")
+def empty_config_request_fixture():
+    """Create an empty configuration request."""
+    return {"configs": {}}
 
 
 def test_get_available_metrics_success(sync_client: TestClient):
@@ -85,6 +118,225 @@ def test_get_available_metrics_exception_handling(
     data = response.json()
     assert "An error occurred while retrieving available metrics:" in data["detail"]
     assert "Test error" in data["detail"]
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_success_all(
+    mock_metric_registry, sync_client: TestClient, valid_config_request
+):
+    """Test successful configuration of all requested metrics."""
+    # Mock metric instances
+    mock_rouge_metric = Mock()
+    mock_bleu_metric = Mock()
+
+    mock_metric_registry.get_metrics.return_value = {
+        "rouge_score": mock_rouge_metric,
+        "bleu_score": mock_bleu_metric,
+    }
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=valid_config_request,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is True
+    assert "Successfully configured 2 metrics" in data["message"]
+    assert set(data["configured_metrics"]) == {"rouge_score", "bleu_score"}
+    assert data["failed_metrics"] is None
+
+    # Verify configure was called on both metrics
+    mock_rouge_metric.configure.assert_called_once()
+    mock_bleu_metric.configure.assert_called_once()
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_partial_success(
+    mock_metric_registry, sync_client: TestClient
+):
+    """Test partial success when some metrics fail to configure."""
+    mock_rouge_metric = Mock()
+    mock_rouge_metric.configure.side_effect = ValueError("Invalid rouge configuration")
+    mock_bleu_metric = Mock()
+
+    mock_metric_registry.get_metrics.return_value = {
+        "rouge_score": mock_rouge_metric,
+        "bleu_score": mock_bleu_metric,
+    }
+
+    request_body = {
+        "configs": {
+            "rouge_score": {"rouge_types": ["rouge1"], "use_stemmer": True},
+            "bleu_score": {"max_n": 4, "smooth_method": "exp"},
+        }
+    }
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=request_body,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is True
+    assert "Configured 1 metrics, 1 failed" in data["message"]
+    assert data["configured_metrics"] == ["bleu_score"]
+    assert "rouge_score" in data["failed_metrics"]
+    assert "Invalid rouge configuration" in data["failed_metrics"]["rouge_score"]
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_metric_not_found(
+    mock_metric_registry, sync_client: TestClient
+):
+    """Test handling when requested metric is not found in registry."""
+    mock_metric_registry.get_metrics.return_value = {}
+
+    request_body = {
+        "configs": {"rouge_score": {"rouge_types": ["rouge1"], "use_stemmer": True}}
+    }
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=request_body,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is False
+    assert "Failed to configure any metrics" in data["message"]
+    assert data["configured_metrics"] is None
+    assert "rouge_score" in data["failed_metrics"]
+    assert "not found in registry" in data["failed_metrics"]["rouge_score"]
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_not_implemented_error(
+    mock_metric_registry, sync_client: TestClient
+):
+    """Test handling when metric doesn't implement configure method."""
+    mock_metric = Mock()
+    mock_metric.configure.side_effect = NotImplementedError("Configure not implemented")
+
+    mock_metric_registry.get_metrics.return_value = {"rouge_score": mock_metric}
+
+    request_body = {
+        "configs": {"rouge_score": {"rouge_types": ["rouge1"], "use_stemmer": True}}
+    }
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=request_body,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is False
+    assert "Failed to configure any metrics" in data["message"]
+    assert "rouge_score" in data["failed_metrics"]
+    assert "Configure not implemented" in data["failed_metrics"]["rouge_score"]
+
+
+def test_configure_metrics_empty_config(sync_client: TestClient, empty_config_request):
+    """Test handling of empty configuration request."""
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=empty_config_request,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is False
+    assert "Failed to configure any metrics" in data["message"]
+    assert data["configured_metrics"] is None
+    assert data["failed_metrics"] is None
+
+
+def test_configure_metrics_invalid_json(sync_client: TestClient):
+    """Test handling of invalid JSON in request body."""
+    response = sync_client.post(
+        CONFIGURE_URL,
+        data="invalid json",  # type: ignore
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_configure_metrics_missing_auth(sync_client: TestClient, valid_config_request):
+    """Test that authentication is required."""
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=valid_config_request,
+        # No auth headers
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_registry_exception(
+    mock_metric_registry, sync_client: TestClient, valid_config_request
+):
+    """Test exception handling when metric registry throws an error."""
+    mock_metric_registry.get_metrics.side_effect = Exception("Registry error")
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=valid_config_request,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    data = response.json()
+    assert "An error occurred while configuring metrics:" in data["detail"]
+    assert "Registry error" in data["detail"]
+
+
+@patch("src.api.v1.metrics_sync.metric_registry")
+def test_configure_metrics_single_metric_success(
+    mock_metric_registry, sync_client: TestClient
+):
+    """Test successful configuration of a single metric."""
+    mock_rouge_metric = Mock()
+
+    mock_metric_registry.get_metrics.return_value = {"rouge_score": mock_rouge_metric}
+
+    request_body = {
+        "configs": {
+            "rouge_score": {"rouge_types": ["rouge1", "rouge2"], "use_stemmer": False}
+        }
+    }
+
+    response = sync_client.post(
+        CONFIGURE_URL,
+        json=request_body,
+        headers=mock_headers(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert data["success"] is True
+    assert "Successfully configured 1 metrics" in data["message"]
+    assert data["configured_metrics"] == ["rouge_score"]
+    assert data["failed_metrics"] is None
+
+    # Verify the correct config was passed
+    mock_rouge_metric.configure.assert_called_once()
+    call_args = mock_rouge_metric.configure.call_args[0][0]
+    assert call_args == {"rouge_types": ["rouge1", "rouge2"], "use_stemmer": False}
 
 
 def test_evaluate_metrics_success(sync_client: TestClient, valid_request_body: dict):

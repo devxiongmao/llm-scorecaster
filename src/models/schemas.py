@@ -118,3 +118,26 @@ class IndexResponse(BaseModel):
     success: bool
     message: str
     results: List[Dict[str, Any]]
+
+
+class MetricsConfigRequest(BaseModel):
+    """Request model for configuring metrics."""
+
+    configs: Dict[MetricType, Dict[str, Any]] = Field(
+        ...,
+        description="Dictionary mapping metric types to their specific configuration parameters",
+    )
+
+
+class MetricsConfigResponse(BaseModel):
+    """Response model for metrics configuration."""
+
+    success: bool
+    message: str
+    configured_metrics: Optional[List[str]] = Field(
+        default=None, description="List of successfully configured metrics"
+    )
+    failed_metrics: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Dictionary of metrics that failed to configure and their error messages",
+    )

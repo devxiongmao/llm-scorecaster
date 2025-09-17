@@ -3,7 +3,7 @@
 from unittest.mock import Mock, patch
 import pytest
 
-from src.core.metrics.implementations.rouge_score import RougeMetric
+from src.core.metrics.implementations.rouge_score import RougeConfig, RougeMetric
 from src.models.schemas import MetricType, MetricResult
 
 
@@ -17,13 +17,15 @@ def rouge_metric_fixture():
 @pytest.fixture(name="custom_rouge_metric")
 def custom_rouge_metric_fixture():
     """ROUGE metric with custom configuration."""
-    return RougeMetric(rouge_types=["rouge1", "rouge2"], use_stemmer=False)
+    return RougeMetric(
+        config=RougeConfig(rouge_types=["rouge1", "rouge2"], use_stemmer=False)
+    )
 
 
 @pytest.fixture(name="rouge1_only_metric")
 def rouge1_only_metric_fixture():
     """ROUGE metric with only ROUGE-1."""
-    return RougeMetric(rouge_types=["rouge1"])
+    return RougeMetric(config=RougeConfig(rouge_types=["rouge1"]))
 
 
 @pytest.fixture(name="mock_rouge_scorer")
@@ -85,8 +87,13 @@ def test_custom_metric_properties(custom_rouge_metric):
 def test_initial_state(rouge_metric):
     """ROUGE metric starts in unloaded state."""
     assert rouge_metric._rouge_score_loaded is False
-    assert rouge_metric.rouge_types == ["rouge1", "rouge2", "rougeL", "rougeLsum"]
-    assert rouge_metric.use_stemmer is True
+    assert rouge_metric.config.rouge_types == [
+        "rouge1",
+        "rouge2",
+        "rougeL",
+        "rougeLsum",
+    ]
+    assert rouge_metric.config.use_stemmer is True
     assert rouge_metric._scorer is None
 
 
@@ -137,8 +144,12 @@ def test_valid_rouge_types_initialization():
     ]
 
     for rouge_types in valid_combinations:
-        metric = RougeMetric(rouge_types=rouge_types)
-        assert metric.rouge_types == rouge_types
+        metric = RougeMetric(
+            config=RougeConfig(
+                rouge_types=rouge_types,
+            )
+        )
+        assert metric.config.rouge_types == rouge_types
 
 
 def test_invalid_rouge_types_initialization():
@@ -153,7 +164,11 @@ def test_invalid_rouge_types_initialization():
 
     for rouge_types in invalid_combinations:
         with pytest.raises(ValueError, match="Invalid ROUGE types"):
-            RougeMetric(rouge_types=rouge_types)
+            RougeMetric(
+                config=RougeConfig(
+                    rouge_types=rouge_types,
+                )
+            )
 
 
 def test_get_supported_rouge_types(rouge_metric):
@@ -513,12 +528,14 @@ def test_compute_batch_loads_rouge_score_if_needed(
 def test_configure_method(rouge_metric):
     """configure method updates settings correctly."""
     rouge_metric.configure(
-        rouge_types=["rouge1", "rougeL"],
-        use_stemmer=False,
+        config=RougeConfig(
+            rouge_types=["rouge1", "rougeL"],
+            use_stemmer=False,
+        )
     )
 
-    assert rouge_metric.rouge_types == ["rouge1", "rougeL"]
-    assert rouge_metric.use_stemmer is False
+    assert rouge_metric.config.rouge_types == ["rouge1", "rougeL"]
+    assert rouge_metric.config.use_stemmer is False
     # Should reset loader state
     assert rouge_metric._rouge_score_loaded is False
     assert rouge_metric._scorer is None
@@ -526,35 +543,40 @@ def test_configure_method(rouge_metric):
 
 def test_configure_partial_update(rouge_metric):
     """configure method allows partial updates."""
-    original_stemmer = rouge_metric.use_stemmer
+    original_stemmer = rouge_metric.config.use_stemmer
 
-    rouge_metric.configure(rouge_types=["rouge2"])
+    rouge_metric.configure(config=RougeConfig(rouge_types=["rouge2"]))
 
-    assert rouge_metric.rouge_types == ["rouge2"]
-    assert rouge_metric.use_stemmer == original_stemmer
+    assert rouge_metric.config.rouge_types == ["rouge2"]
+    assert rouge_metric.config.use_stemmer == original_stemmer
 
 
 def test_configure_none_values(rouge_metric):
     """configure method ignores None values."""
     original_config = {
-        "rouge_types": rouge_metric.rouge_types.copy(),
-        "use_stemmer": rouge_metric.use_stemmer,
+        "rouge_types": rouge_metric.config.rouge_types.copy(),
+        "use_stemmer": rouge_metric.config.use_stemmer,
     }
 
-    rouge_metric.configure(rouge_types=None, use_stemmer=None)
+    rouge_metric.configure()
 
     # All settings should remain unchanged
-    assert rouge_metric.rouge_types == original_config["rouge_types"]
-    assert rouge_metric.use_stemmer == original_config["use_stemmer"]
+    assert rouge_metric.config.rouge_types == original_config["rouge_types"]
+    assert rouge_metric.config.use_stemmer == original_config["use_stemmer"]
 
 
 def test_configure_invalid_rouge_types(rouge_metric):
     """configure method validates rouge types."""
     with pytest.raises(ValueError, match="Invalid ROUGE types"):
-        rouge_metric.configure(rouge_types=["rouge3", "invalid"])
+        rouge_metric.configure(config=RougeConfig(rouge_types=["rouge3", "invalid"]))
 
     # Original config should be unchanged
-    assert rouge_metric.rouge_types == ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    assert rouge_metric.config.rouge_types == [
+        "rouge1",
+        "rouge2",
+        "rougeL",
+        "rougeLsum",
+    ]
 
 
 def test_configure_no_change_doesnt_reset_loader(rouge_metric):
@@ -565,7 +587,9 @@ def test_configure_no_change_doesnt_reset_loader(rouge_metric):
 
     # Configure with same values
     rouge_metric.configure(
-        rouge_types=["rouge1", "rouge2", "rougeL", "rougeLsum"], use_stemmer=True
+        config=RougeConfig(
+            rouge_types=["rouge1", "rouge2", "rougeL", "rougeLsum"], use_stemmer=True
+        )
     )
 
     # Should not reset loader
@@ -660,7 +684,11 @@ def test_special_characters(rouge_metric, mock_rouge_scorer):
 )
 def test_different_rouge_type_combinations(rouge_types):
     """ROUGE metric works with different rouge type combinations."""
-    rouge_metric = RougeMetric(rouge_types=rouge_types)
+    rouge_metric = RougeMetric(
+        config=RougeConfig(
+            rouge_types=rouge_types,
+        )
+    )
 
     mock_scorer = Mock()
     mock_results = {}
@@ -690,7 +718,11 @@ def test_different_rouge_type_combinations(rouge_types):
 @pytest.mark.parametrize("use_stemmer", [True, False])
 def test_different_stemmer_settings(use_stemmer):
     """ROUGE metric works with different stemmer settings."""
-    rouge_metric = RougeMetric(use_stemmer=use_stemmer)
+    rouge_metric = RougeMetric(
+        config=RougeConfig(
+            use_stemmer=use_stemmer,
+        )
+    )
 
     with patch("rouge_score.rouge_scorer.RougeScorer") as mock_scorer_class:
         mock_scorer = Mock()

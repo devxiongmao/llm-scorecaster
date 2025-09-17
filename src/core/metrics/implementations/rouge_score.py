@@ -1,11 +1,30 @@
 """ROUGE Score metric implementation."""
 
+from dataclasses import dataclass, field
 from typing import List, Dict, Any, Set, Optional
 import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class RougeConfig:
+    """Configuration for ROUGE metric.
+    rouge_types: List of ROUGE variants to compute.
+    Defaults to ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
+                - rouge1: Unigram overlap
+                - rouge2: Bigram overlap
+                - rougeL: Longest Common Subsequence (LCS)
+                - rougeLsum: LCS applied to summary-level (sentence-split)
+    use_stemmer: Whether to use Porter stemmer for preprocessing
+    """
+
+    rouge_types: List[str] = field(
+        default_factory=lambda: ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    )
+    use_stemmer: bool = True
 
 
 class RougeMetric(BaseMetric):
@@ -18,32 +37,19 @@ class RougeMetric(BaseMetric):
     and reference texts.
     """
 
-    def __init__(
-        self, rouge_types: Optional[List[str]] = None, use_stemmer: bool = True
-    ):
+    def __init__(self, config: Optional[RougeConfig] = None):
         """
         Initialize ROUGE metric.
 
         Args:
-            rouge_types: List of ROUGE variants to compute.
-            Defaults to ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
-                        - rouge1: Unigram overlap
-                        - rouge2: Bigram overlap
-                        - rougeL: Longest Common Subsequence (LCS)
-                        - rougeLsum: LCS applied to summary-level (sentence-split)
-            use_stemmer: Whether to use Porter stemmer for preprocessing
+            config: ROUGE configuration object
         """
         super().__init__()
-
-        # Set default ROUGE types if not provided
-        if rouge_types is None:
-            rouge_types = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+        self.config = config or RougeConfig()
 
         # Validate rouge_types
-        self._validate_rouge_types(rouge_types)
+        self._validate_rouge_types(self.config.rouge_types)
 
-        self.rouge_types = rouge_types
-        self.use_stemmer = use_stemmer
         self._scorer = None
         self._rouge_score_loaded = False
 
@@ -57,14 +63,14 @@ class RougeMetric(BaseMetric):
 
     @property
     def description(self) -> str:
-        types_str = ", ".join(self.rouge_types)
-        stemmer_str = "with stemmer" if self.use_stemmer else "without stemmer"
+        types_str = ", ".join(self.config.rouge_types)
+        stemmer_str = "with stemmer" if self.config.use_stemmer else "without stemmer"
         return f"ROUGE Score: N-gram overlap evaluation ({types_str}) {stemmer_str}"
 
     @property
     def requires_model_download(self) -> bool:
         # ROUGE doesn't require model downloads, but may need NLTK data for stemming
-        return self.use_stemmer
+        return self.config.use_stemmer
 
     def _validate_rouge_types(self, rouge_types: List[str]) -> None:
         """Validate ROUGE type configuration."""
@@ -88,11 +94,12 @@ class RougeMetric(BaseMetric):
 
             # Initialize ROUGE scorer with specified types and stemmer option
             self._scorer = rouge_scorer.RougeScorer(
-                rouge_types=self.rouge_types, use_stemmer=self.use_stemmer
+                rouge_types=self.config.rouge_types, use_stemmer=self.config.use_stemmer
             )
             self._rouge_score_loaded = True
             logger.info(
-                "ROUGE scorer loaded successfully with types: %s", self.rouge_types
+                "ROUGE scorer loaded successfully with types: %s",
+                self.config.rouge_types,
             )
 
         except ImportError as e:
@@ -114,7 +121,7 @@ class RougeMetric(BaseMetric):
         details = {}
         primary_f1_score = 0.0
 
-        for rouge_type in self.rouge_types:
+        for rouge_type in self.config.rouge_types:
             if rouge_type in scores:
                 rouge_score = scores[rouge_type]
 
@@ -138,8 +145,8 @@ class RougeMetric(BaseMetric):
         # Add configuration info to details
         details.update(
             {
-                "rouge_types": self.rouge_types,
-                "use_stemmer": self.use_stemmer,
+                "rouge_types": self.config.rouge_types,
+                "use_stemmer": self.config.use_stemmer,
                 "library": "rouge-score",
             }
         )
@@ -247,36 +254,34 @@ class RougeMetric(BaseMetric):
         return {
             "status": "loaded" if self._rouge_score_loaded else "not_loaded",
             "library": "rouge-score",
-            "rouge_types": self.rouge_types,
-            "use_stemmer": self.use_stemmer,
-            "requires_download": self.use_stemmer,  # Only for NLTK stemmer data
+            "rouge_types": self.config.rouge_types,
+            "use_stemmer": self.config.use_stemmer,
+            "requires_download": self.config.use_stemmer,  # Only for NLTK stemmer data
             "supported_types": sorted(self.get_supported_rouge_types()),
         }
 
-    def configure(
-        self,
-        rouge_types: Optional[List[str]] = None,
-        use_stemmer: Optional[bool] = None,
-    ) -> None:
+    def configure(self, config: Optional[RougeConfig] = None) -> None:
         """
         Update ROUGE configuration. Will take effect on next computation.
         Forces reinitialization of the scorer with new settings.
 
         Args:
-            rouge_types: List of ROUGE variants to compute
-            use_stemmer: Whether to use Porter stemmer for preprocessing
+            config: ROUGE configuration object
         """
+        if config is None:
+            return
+
         config_changed = False
 
-        if rouge_types is not None:
-            self._validate_rouge_types(rouge_types)
-            if rouge_types != self.rouge_types:
-                self.rouge_types = rouge_types
+        if config.rouge_types is not None:
+            self._validate_rouge_types(config.rouge_types)
+            if config.rouge_types != self.config.rouge_types:
+                self.config.rouge_types = config.rouge_types
                 config_changed = True
 
-        if use_stemmer is not None:
-            if use_stemmer != self.use_stemmer:
-                self.use_stemmer = use_stemmer
+        if config.use_stemmer is not None:
+            if config.use_stemmer != self.config.use_stemmer:
+                self.config.use_stemmer = config.use_stemmer
                 config_changed = True
 
         # Force reinitialization if config changed
@@ -285,8 +290,8 @@ class RougeMetric(BaseMetric):
             self._scorer = None
             logger.info(
                 "ROUGE configuration updated: rouge_types=%s, use_stemmer=%s",
-                self.rouge_types,
-                self.use_stemmer,
+                self.config.rouge_types,
+                self.config.use_stemmer,
             )
 
     def get_supported_rouge_types(self) -> Set[str]:
@@ -294,5 +299,5 @@ class RougeMetric(BaseMetric):
         return {"rouge1", "rouge2", "rougeL", "rougeLsum"}
 
     def __str__(self) -> str:
-        types_str = ",".join(self.rouge_types)
+        types_str = ",".join(self.config.rouge_types)
         return f"{self.__class__.__name__}({self.name}, types=[{types_str}])"

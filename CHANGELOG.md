@@ -1,10 +1,10 @@
 ## Changelog
-### From v0.0.9 to HEAD
+### From v0.0.10 to HEAD
 
-- Bump pytest from 8.4.1 to 8.4.2 (#44) (262ac90) by dependabot[bot]
-- XMDEV-509: Update github labels so update text applies to enhancement (#51) (aecc96f) by Jon
-- XMDEV-508: Update pytest-httpserver to appropriate place in pyproject.toml (#50) (2e6addb) by Jon
-- Bump pyright from 1.1.404 to 1.1.405 (#45) (3975d9d) by dependabot[bot]
-- Bump actions/github-script from 7 to 8 (#43) (14853e7) by dependabot[bot]
-- Bump actions/setup-python from 5 to 6 (#42) (8d05685) by dependabot[bot]
+- Bump pytest-asyncio from 1.1.0 to 1.2.0 (#55) (a5f8e76) by dependabot[bot]
+- Bump pydantic from 2.11.7 to 2.11.9 (#56) (ffe24f2) by dependabot[bot]
+- XMDEV-488: Adds route to configure metrics through the API (#58) (4a4b7e4) by Jon
+- XMDEV-510: Configure environment env var (#57) (f27f8b7) by Jon
+- XMDEV-493: Adds get available metrics route (#54) (ef0c65f) by Jon
+- XMDEV-511: Remove debug env var (#53) (34e4dfb) by Jon
 

@@ -1,7 +1,7 @@
 """ROUGE Score metric implementation."""
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Set, Optional
+from typing import List, Dict, Any, Set, Optional, Union
 import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
@@ -260,16 +260,24 @@ class RougeMetric(BaseMetric):
             "supported_types": sorted(self.get_supported_rouge_types()),
         }
 
-    def configure(self, config: Optional[RougeConfig] = None) -> None:
+    def configure(self, config: Optional[Union[RougeConfig, dict]] = None) -> None:
         """
         Update ROUGE configuration. Will take effect on next computation.
         Forces reinitialization of the scorer with new settings.
 
         Args:
-            config: ROUGE configuration object
+            config: ROUGE configuration object or dictionary with configuration parameters
         """
         if config is None:
             return
+
+        if isinstance(config, dict):
+            try:
+                config = RougeConfig(**config)
+            except TypeError as e:
+                raise ValueError(f"Invalid ROUGE configuration parameters: {e}") from e
+            except Exception as e:
+                raise ValueError(f"Failed to create ROUGE configuration: {e}") from e
 
         config_changed = False
 

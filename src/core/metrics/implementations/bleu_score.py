@@ -1,7 +1,7 @@
 """BLEU Score metric implementation."""
 
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 import logging
 from src.core.metrics.base import BaseMetric
 from src.models.schemas import MetricType, MetricResult, TextPair
@@ -246,20 +246,25 @@ class BleuMetric(BaseMetric):
             "requires_download": False,
         }
 
-    def configure(self, config: Optional[BleuConfig] = None) -> None:
+    def configure(self, config: Optional[Union[BleuConfig, dict]] = None) -> None:
         """
         Update BLEU configuration. Will take effect on next computation.
         Allows you to update the settings at runtime without recreating the metric.
 
         Args:
-            max_n: Maximum n-gram order to consider
-            smooth_method: Smoothing method ('exp', 'floor', 'add-k', 'none')
-            smooth_value: Smoothing value for add-k method
-            tokenize: Tokenization method ('13a', 'intl', 'zh', 'ja-mecab', 'none')
-            lowercase: Whether to lowercase the input
+            config: BLEU configuration object or dictionary with configuration parameters
         """
         if config is None:
             return
+
+        # Handle dictionary input by converting to BleuConfig
+        if isinstance(config, dict):
+            try:
+                config = BleuConfig(**config)
+            except TypeError as e:
+                raise ValueError(f"Invalid BLEU configuration parameters: {e}") from e
+            except Exception as e:
+                raise ValueError(f"Failed to create BLEU configuration: {e}") from e
 
         if config.max_n is not None:
             self.config.max_n = config.max_n

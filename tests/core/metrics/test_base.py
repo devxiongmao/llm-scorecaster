@@ -82,6 +82,13 @@ class TestBaseMetric:
             "description": "custom_name evaluation metric",
         }
 
+    def test_configure_not_implemented(self):
+        """Test that configure method raises NotImplementedError by default."""
+        metric = ConcreteMetric()
+        with pytest.raises(NotImplementedError) as exc_info:
+            metric.configure()
+        assert "does not have a configuration method" in str(exc_info.value)
+
     def test_compute_single_basic(self):
         """Test single computation works correctly."""
         metric = ConcreteMetric()

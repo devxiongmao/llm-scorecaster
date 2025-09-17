@@ -192,6 +192,7 @@ class MetricRegistry:
             "description": metric.description,
             "requires_model_download": metric.requires_model_download,
             "class_name": metric.__class__.__name__,
+            **metric.get_model_info(),
         }
 
     def get_all_metrics_info(

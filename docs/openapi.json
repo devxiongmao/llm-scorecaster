@@ -1,0 +1,940 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "llm-scorecaster",
+    "description": "An open-source LLM metrics evaluation API.",
+    "version": "0.0.11"
+  },
+  "paths": {
+    "/api/v1/metrics/": {
+      "get": {
+        "tags": [
+          "synchronous-metrics"
+        ],
+        "summary": "Get Available Metrics",
+        "description": "Retrieve the list of available metrics.\n\nThis endpoint returns a list of all metrics that can be evaluated\nby the API. It does not perform any metric calculations.",
+        "operationId": "get_available_metrics_api_v1_metrics__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/evaluate": {
+      "post": {
+        "tags": [
+          "synchronous-metrics"
+        ],
+        "summary": "Evaluate Metrics Sync",
+        "description": "Synchronously evaluate metrics for the provided text pairs.\n\nThis endpoint calculates the requested metrics for each text pair\nand returns results immediately. Suitable for real-time evaluation\nof small to medium-sized batches.",
+        "operationId": "evaluate_metrics_sync_api_v1_metrics_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/configure": {
+      "post": {
+        "tags": [
+          "synchronous-metrics"
+        ],
+        "summary": "Configure Metrics",
+        "description": "Configure specific metrics to be used in future evaluations.\n\nThis endpoint allows you to set configuration parameters for individual metrics,\nsuch as model paths, thresholds, or other metric-specific settings.\nEach metric can have its own unique configuration.",
+        "operationId": "configure_metrics_api_v1_metrics_configure_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricsConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/async/evaluate": {
+      "post": {
+        "tags": [
+          "asynchronous-metrics"
+        ],
+        "summary": "Evaluate Metrics Async",
+        "description": "Asynchronously evaluate metrics for the provided text pairs.\n\nThis endpoint queues a metrics computation job and returns immediately\nwith a job ID.\n\nIf a webhook_url is provided in the request, results will be POST'd to that URL\nwhen processing is complete. Otherwise, use the job ID with the /jobs endpoints\nto check status and retrieve results when complete.\n\nArgs:\n    request: The metrics request containing text pairs, requested metrics,\n    and optional webhook URL\n\nReturns:\n    AsyncJobResponse containing the job ID and status information",
+        "operationId": "evaluate_metrics_async_api_v1_async_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/async/health": {
+      "get": {
+        "tags": [
+          "asynchronous-metrics"
+        ],
+        "summary": "Health Check Async",
+        "description": "Health check endpoint for the async API.\n\nThis endpoint checks if the Celery workers are responsive and ready\nto process tasks.",
+        "operationId": "health_check_async_api_v1_async_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Async Api V1 Async Health Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/jobs/status/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Job Status",
+        "description": "Get the current status of an async job.\n\nArgs:\n    job_id: The unique identifier for the job\n\nReturns:\n    JobStatusResponse containing current status and progress information",
+        "operationId": "get_job_status_api_v1_jobs_status__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/results/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Job Results",
+        "description": "Retrieve the results of a completed async job.\n\nArgs:\n    job_id: The unique identifier for the job\n\nReturns:\n    MetricsResponse containing the computed metrics results\n\nRaises:\n    HTTPException: If job is not completed, failed, or doesn't exist",
+        "operationId": "get_job_results_api_v1_jobs_results__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "delete": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel Job",
+        "description": "Cancel an async job.\n\nArgs:\n    job_id: The unique identifier for the job\n    terminate: If True, forcefully terminate running tasks (use with caution)\n\nReturns:\n    Dictionary with cancellation status",
+        "operationId": "cancel_job_api_v1_jobs__job_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "terminate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Force terminate the task if it's running",
+              "default": false,
+              "title": "Terminate"
+            },
+            "description": "Force terminate the task if it's running"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Job Api V1 Jobs  Job Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "List Active Jobs",
+        "description": "List active jobs (optional endpoint for monitoring).\n\nNote: This requires additional Celery configuration to work properly\nand may not be available in all setups.\n\nReturns:\n    Dictionary containing active job information",
+        "operationId": "list_active_jobs_api_v1_jobs__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Active Jobs Api V1 Jobs  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root endpoint with basic API information.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AsyncJobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique identifier for the submitted job"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the job"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable status message"
+          },
+          "estimated_completion_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Completion Time",
+            "description": "Estimated completion time in seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "message"
+        ],
+        "title": "AsyncJobResponse",
+        "description": "Response model for async job submission."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IndexResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "results"
+        ],
+        "title": "IndexResponse",
+        "description": "Response model for index of available metrics."
+      },
+      "JobStatusResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique identifier for the job"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the job"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable status message"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "total_pairs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Pairs",
+            "description": "Total number of text pairs being processed"
+          },
+          "total_metrics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Metrics",
+            "description": "Total number of metrics being computed"
+          },
+          "completed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed",
+            "description": "Whether the job has completed successfully",
+            "default": false
+          },
+          "failed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed",
+            "description": "Whether the job has failed",
+            "default": false
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if the job failed"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO timestamp when the job started processing"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "ISO timestamp when the job completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "message"
+        ],
+        "title": "JobStatusResponse",
+        "description": "Response model for job status queries."
+      },
+      "MetricResult": {
+        "properties": {
+          "metric_name": {
+            "type": "string",
+            "title": "Metric Name"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric_name",
+          "score"
+        ],
+        "title": "MetricResult",
+        "description": "Result for a single metric on a text pair."
+      },
+      "MetricType": {
+        "type": "string",
+        "enum": [
+          "bert_score",
+          "bleu_score",
+          "rouge_score"
+        ],
+        "title": "MetricType",
+        "description": "Available metric types."
+      },
+      "MetricsConfigRequest": {
+        "properties": {
+          "configs": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MetricType"
+            },
+            "type": "object",
+            "title": "Configs",
+            "description": "Dictionary mapping metric types to their specific configuration parameters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "configs"
+        ],
+        "title": "MetricsConfigRequest",
+        "description": "Request model for configuring metrics."
+      },
+      "MetricsConfigResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "configured_metrics": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configured Metrics",
+            "description": "List of successfully configured metrics"
+          },
+          "failed_metrics": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Metrics",
+            "description": "Dictionary of metrics that failed to configure and their error messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "MetricsConfigResponse",
+        "description": "Response model for metrics configuration."
+      },
+      "MetricsRequest": {
+        "properties": {
+          "text_pairs": {
+            "items": {
+              "$ref": "#/components/schemas/TextPair"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Text Pairs",
+            "description": "List of text pairs to evaluate"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricType"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "List of metrics to calculate"
+          },
+          "batch_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Size",
+            "description": "Batch size for processing optimization",
+            "default": 0
+          },
+          "webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webhook Url",
+            "description": "Optional webhook URL to receive results when processing is complete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text_pairs",
+          "metrics"
+        ],
+        "title": "MetricsRequest",
+        "description": "Request model for metrics evaluation."
+      },
+      "MetricsResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TextPairResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "processing_time_seconds": {
+            "type": "number",
+            "title": "Processing Time Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "results",
+          "processing_time_seconds"
+        ],
+        "title": "MetricsResponse",
+        "description": "Response model for metrics evaluation."
+      },
+      "TextPair": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "The reference/ground truth text"
+          },
+          "candidate": {
+            "type": "string",
+            "title": "Candidate",
+            "description": "The candidate text to evaluate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reference",
+          "candidate"
+        ],
+        "title": "TextPair",
+        "description": "A pair of reference and candidate texts for evaluation."
+      },
+      "TextPairResult": {
+        "properties": {
+          "pair_index": {
+            "type": "integer",
+            "title": "Pair Index"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "candidate": {
+            "type": "string",
+            "title": "Candidate"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricResult"
+            },
+            "type": "array",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair_index",
+          "reference",
+          "candidate",
+          "metrics"
+        ],
+        "title": "TextPairResult",
+        "description": "Results for all metrics on a single text pair."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

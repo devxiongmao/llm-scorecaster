@@ -12,6 +12,7 @@ An open-source REST API for evaluating Large Language Model (LLM) responses usin
 - **Fast & Lightweight**: Built with FastAPI for high performance
 - **Auto-Documentation**: Interactive API docs with Swagger UI
 - **Modular Dependencies**: Install only the metrics you need
+- **OpenAPI JSON Spec**: Generate clients for the API in any language using the provided openapi.json file
 
 ## Architecture
 
@@ -518,7 +519,8 @@ The registry will automatically discover it on the next discover_metrics() call!
 - 🟢 **Complete**: Asynchronous API, Celery workers 
 - 🟢 **Complete**: Webhook support, post your results back when ready 
 - 🟢 **Complete**: Dockerize the app
-- 🟡 **In-Progress**: Metrics Router for live configuration and discovery
+- 🟢 **Complete**: Metrics Router for live configuration and discovery
+- 🟢 **Complete**: OpenAPI json for client generation
 
 ## Contributing
 

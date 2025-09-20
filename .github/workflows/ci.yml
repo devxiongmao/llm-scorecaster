@@ -195,9 +195,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --extras "all"
 
-      - name: Generate OpenAPI schema
-        run: poetry run python scripts/generate_openapi.py
-
       - name: Generate Changelog and Version
         run: |
           # Generate changelog
@@ -233,6 +230,9 @@ jobs:
           echo "$NEW_VERSION" > VERSION
           echo "Version bumped to: $NEW_VERSION"
 
+      - name: Generate OpenAPI schema
+        run: poetry run python scripts/generate_openapi.py
+      
       - name: Commit Changelog and Version Updates
         run: |
           TAG_NAME="v$(cat VERSION)"

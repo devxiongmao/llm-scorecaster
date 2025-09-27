@@ -3,7 +3,7 @@
   "info": {
     "title": "llm-scorecaster",
     "description": "An open-source LLM metrics evaluation API.",
-    "version": "0.0.11"
+    "version": "1.0.1"
   },
   "paths": {
     "/api/v1/metrics/": {

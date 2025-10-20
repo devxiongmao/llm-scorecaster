@@ -17,7 +17,7 @@ redis = "^6.4.0"
 celery = "^5.5.3"
 python-multipart = "^0.0.20"
 httpx = "^0.28.1"
-psutil = "^7.1.0"
+psutil = "^7.1.1"
 
 # Optional dependencies for specific metrics
 bert-score = { version = "^0.3.13", optional = true }

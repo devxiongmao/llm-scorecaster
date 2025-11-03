@@ -10,7 +10,7 @@ package-mode = false
 python = "^3.12"
 # Core dependencies - always installed
 pydantic = "^2.12.0"
-fastapi = "^0.119.0"
+fastapi = "^0.120.4"
 uvicorn = { extras = ["standard"], version = "^0.37.0" }
 pydantic-settings = "^2.11.0"
 redis = "^6.4.0"

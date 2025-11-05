@@ -2303,15 +2303,15 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pylint"
-version = "4.0.0"
+version = "4.0.2"
 description = "python code static checker"
 optional = true
 python-versions = ">=3.10.0"
 groups = ["main"]
 markers = "extra == \"lint\" or extra == \"dev\" or extra == \"all\""
 files = [
-    {file = "pylint-4.0.0-py3-none-any.whl", hash = "sha256:196b92a85204bb0c0a416a6bb324f6185e59ff1d687ee1d614bf0abf34a348e8"},
-    {file = "pylint-4.0.0.tar.gz", hash = "sha256:62da212808c0681e49ffb125f0a994c685d912cf19ae373075649ebb5870ec28"},
+    {file = "pylint-4.0.2-py3-none-any.whl", hash = "sha256:9627ccd129893fb8ee8e8010261cb13485daca83e61a6f854a85528ee579502d"},
+    {file = "pylint-4.0.2.tar.gz", hash = "sha256:9c22dfa52781d3b79ce86ab2463940f874921a3e5707bcfc98dd0c019945014e"},
 ]
 
 [package.dependencies]
@@ -3537,4 +3537,4 @@ test = ["pytest", "pytest-asyncio", "pytest-httpserver"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "36d7868ed08aefbd4132cd050859df7a1c40b701c6e2e1fdbfd54a8da5940662"
+content-hash = "940f8d3742c3a54bbec3e2a128343d22e428527c6a06adfcb20f17fabc5f5453"

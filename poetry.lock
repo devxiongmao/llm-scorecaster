@@ -2615,17 +2615,18 @@ files = [
 
 [[package]]
 name = "redis"
-version = "6.4.0"
+version = "7.0.1"
 description = "Python client for Redis database and key-value store"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f"},
-    {file = "redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010"},
+    {file = "redis-7.0.1-py3-none-any.whl", hash = "sha256:4977af3c7d67f8f0eb8b6fec0dafc9605db9343142f634041fb0235f67c0588a"},
+    {file = "redis-7.0.1.tar.gz", hash = "sha256:c949df947dca995dc68fdf5a7863950bf6df24f8d6022394585acc98e81624f1"},
 ]
 
 [package.extras]
+circuit-breaker = ["pybreaker (>=1.4.0)"]
 hiredis = ["hiredis (>=3.2.0)"]
 jwt = ["pyjwt (>=2.9.0)"]
 ocsp = ["cryptography (>=36.0.1)", "pyopenssl (>=20.0.1)", "requests (>=2.31.0)"]
@@ -3560,4 +3561,4 @@ test = ["pytest", "pytest-asyncio", "pytest-httpserver"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "554642059b2d9c983605124e3f66d4e9127d53f239700a1a063f9e042916dd71"
+content-hash = "0706b87375eab85276c97319e7b6660640785a481d3df7dde1f2a66e32283bdc"
